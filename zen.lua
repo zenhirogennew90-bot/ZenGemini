@@ -153,9 +153,9 @@ end
 local SoundService = game:GetService("SoundService")
 local clickSounds = {}
 for _, id in ipairs({
-	"rbxasset://sounds/clickfast.wav",
-	"rbxasset://sounds/button.wav",
-	"rbxasset://sounds/electronicpingshort.wav",
+	"rbxassetid://4743328594", -- Modern UI Clean Pop
+	"rbxassetid://3744371556", -- Bubble Pop (Candu & Soft)
+	"rbxassetid://6895079853", -- Crisp Tick Click
 }) do
 	local snd = Instance.new("Sound")
 	snd.SoundId = id
@@ -167,7 +167,7 @@ local function playClick()
 	if not clickOn then return end
 	local snd = clickSounds[math.random(1, #clickSounds)]
 	snd.Volume = clickVol
-	snd.PlaybackSpeed = 0.7 + math.random() * 1.6
+	snd.PlaybackSpeed = 0.95 + (math.random() * 0.1) -- Variasi nada tipis biar natural
 	snd:Play()
 end
 
