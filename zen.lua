@@ -201,7 +201,7 @@ header.Active = true
 header.Parent = main
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -44, 1, 0)
+title.Size = UDim2.new(1, -165, 1, 0)
 title.Position = UDim2.fromOffset(14, 0)
 title.BackgroundTransparency = 1
 title.Text = "ZEFERA HUB"
@@ -260,6 +260,28 @@ cfgBtn.TextColor3 = Color3.new(1, 1, 1)
 cfgBtn.Parent = header
 corner(cfgBtn, 8)
 cfgBtn.MouseButton1Click:Connect(function() if toggleCfg then toggleCfg() end end)
+local cfgBtn = Instance.new("TextButton")
+cfgBtn.Size = UDim2.fromOffset(34, 28)
+cfgBtn.Position = UDim2.new(1, -114, 0, 6)
+cfgBtn.BackgroundColor3 = Color3.fromRGB(40, 70, 140)
+cfgBtn.Text = "CFG"
+cfgBtn.Font = Enum.Font.GothamBold
+cfgBtn.TextSize = 11
+cfgBtn.TextColor3 = Color3.new(1, 1, 1)
+cfgBtn.Parent = header
+corner(cfgBtn, 8)
+cfgBtn.MouseButton1Click:Connect(function() if toggleCfg then toggleCfg() end end)
+
+local autoCfgBtn = Instance.new("TextButton")
+autoCfgBtn.Size = UDim2.fromOffset(40, 28)
+autoCfgBtn.Position = UDim2.new(1, -158, 0, 6)
+autoCfgBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+autoCfgBtn.Text = "AUTO"
+autoCfgBtn.Font = Enum.Font.GothamBold
+autoCfgBtn.TextSize = 10
+autoCfgBtn.TextColor3 = Color3.new(1, 1, 1)
+autoCfgBtn.Parent = header
+corner(autoCfgBtn, 8)
 
 -- Navigasi tab (kategori) + halaman, tiap halaman punya 2 kolom
 local TAB_Y = 42
@@ -2160,6 +2182,21 @@ local function setStatus(text, color)
 end
 
 local cfgSlot = 1
+local autoLoadOn = false
+local AUTO_PATH = CFG_DIR .. "/autoload.json"
+
+local function saveAutoState()
+	if not writefile then return end
+	pcall(function()
+		if makefolder and not (isfolder and isfolder(CFG_DIR)) then makefolder(CFG_DIR) end
+		writefile(AUTO_PATH, HttpService:JSONEncode({ enabled = autoLoadOn, slot = cfgSlot }))
+	end)
+end
+
+local function refreshAutoBtn()
+	autoCfgBtn.BackgroundColor3 = autoLoadOn and Color3.fromRGB(40, 135, 75) or Color3.fromRGB(30, 30, 42)
+end
+
 local slotBtns = {}
 local function selectSlot(n)
 	cfgSlot = n
@@ -2169,6 +2206,30 @@ local function selectSlot(n)
 	local has = false
 	if isfile then pcall(function() has = isfile(cfgPath(n)) end) end
 	setStatus("Slot " .. n .. (has and ": ada config tersimpan" or ": masih kosong"), COL_INFO)
+	if autoLoadOn then saveAutoState() end
+end
+
+autoCfgBtn.MouseButton1Click:Connect(function()
+	autoLoadOn = not autoLoadOn
+	refreshAutoBtn()
+	saveAutoState()
+	toast(autoLoadOn and ("Autoload ON (Slot " .. cfgSlot .. ")") or "Autoload OFF")
+end)
+
+-- Cek & muat config otomatis saat script baru dieksekusi
+if readfile and isfile and isfile(AUTO_PATH) then
+	local ok, info = pcall(function() return HttpService:JSONDecode(readfile(AUTO_PATH)) end)
+	if ok and type(info) == "table" then
+		cfgSlot = math.clamp(tonumber(info.slot) or 1, 1, 3)
+		autoLoadOn = info.enabled == true
+		refreshAutoBtn()
+		if autoLoadOn then
+			task.defer(function()
+				local loaded, msg = loadSlot(cfgSlot)
+				if loaded then toast("Autoload: " .. msg) end
+			end)
+		end
+	end
 end
 
 for i = 1, 3 do
