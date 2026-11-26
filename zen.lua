@@ -153,21 +153,21 @@ end
 local SoundService = game:GetService("SoundService")
 local clickSounds = {}
 for _, id in ipairs({
-	"rbxassetid://4743328594", -- Modern UI Clean Pop
-	"rbxassetid://3744371556", -- Bubble Pop (Candu & Soft)
-	"rbxassetid://6895079853", -- Crisp Tick Click
+	"rbxassetid://6042053626",
+	"rbxassetid://8769398308",
+	"rbxassetid://5041042777",
 }) do
 	local snd = Instance.new("Sound")
 	snd.SoundId = id
 	snd.Volume = clickVol
-	snd.Parent = SoundService
+	snd.Parent = gui -- Ditempel langsung ke UI ZeFera Hub (dijamin 100% lokal)
 	table.insert(clickSounds, snd)
 end
 local function playClick()
 	if not clickOn then return end
 	local snd = clickSounds[math.random(1, #clickSounds)]
 	snd.Volume = clickVol
-	snd.PlaybackSpeed = 0.95 + (math.random() * 0.1) -- Variasi nada tipis biar natural
+	snd.PlaybackSpeed = 0.95 + (math.random() * 0.1)
 	snd:Play()
 end
 
