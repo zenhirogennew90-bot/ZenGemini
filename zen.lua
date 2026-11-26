@@ -880,6 +880,99 @@ addButton(tA, "TP Bawah Kaki", tpUnder)
 addSlider(tA, tA, "Jarak Vertikal", 1, 100, tpDepth, function(v) tpDepth = v end, " st", 500)
 addNote(tA, "TP Bawah Kaki memakai target dari tab TARGET (kalau kosong: acak). Aktifkan NoClip+Airwalk dulu supaya tidak jatuh ke bawah.")
 
+addHeader(tB, "TP MANUAL TARGET")
+local tpTargetBtn = Instance.new("TextButton")
+tpTargetBtn.Size = UDim2.new(1, 0, 0, 34)
+tpTargetBtn.BackgroundColor3 = Color3.fromRGB(40, 75, 150)
+tpTargetBtn.Text = "TP ke Target Pilihan"
+tpTargetBtn.Font = Enum.Font.GothamBold
+tpTargetBtn.TextSize = 13
+tpTargetBtn.TextColor3 = Color3.new(1, 1, 1)
+tpTargetBtn.LayoutOrder = nextOrder()
+tpTargetBtn.Parent = tB
+corner(tpTargetBtn, 10)
+addStroke(tpTargetBtn, 1.5, 0.1)
+registerPanel(tpTargetBtn)
+
+tpTargetBtn.MouseButton1Click:Connect(function()
+	local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not myRoot then return end
+	local valid = {}
+	for _, p in ipairs(targets) do
+		if p and p.Parent and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			table.insert(valid, p)
+		end
+	end
+	if #valid == 0 then
+		toast("Pilih target dulu di daftar!")
+		return
+	end
+	local chosen = valid[math.random(1, #valid)]
+	myRoot.CFrame = chosen.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+	toast("TP ke " .. chosen.DisplayName)
+end)
+
+addHeader(tB, "PILIH TARGET (SERVER)")
+local tpListFrame = Instance.new("Frame")
+tpListFrame.Size = UDim2.new(1, 0, 0, 0)
+tpListFrame.AutomaticSize = Enum.AutomaticSize.Y
+tpListFrame.BackgroundTransparency = 1
+tpListFrame.LayoutOrder = nextOrder()
+tpListFrame.Parent = tB
+
+local tpListLayout = Instance.new("UIListLayout", tpListFrame)
+tpListLayout.Padding = UDim.new(0, 5)
+tpListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local function renderTpTargets()
+	for _, c in ipairs(tpListFrame:GetChildren()) do
+		if c:IsA("TextButton") then c:Destroy() end
+	end
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local selected = table.find(targets, plr) ~= nil
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(1, 0, 0, 28)
+			btn.BackgroundColor3 = selected and Color3.fromRGB(160, 115, 25) or Color3.fromRGB(26, 26, 36)
+			btn.Text = (selected and "★ " or "") .. plr.DisplayName
+			btn.Font = Enum.Font.GothamBold
+			btn.TextSize = 12
+			btn.TextColor3 = Color3.new(1, 1, 1)
+			btn.TextTruncate = Enum.TextTruncate.AtEnd
+			btn.Parent = tpListFrame
+			corner(btn, 8)
+			addStroke(btn, 1, 0.05)
+			registerPanel(btn)
+
+			btn.MouseButton1Click:Connect(function()
+				local idx = table.find(targets, plr)
+				if idx then
+					table.remove(targets, idx)
+				else
+					if #targets >= 3 then
+						toast("Maksimal 3 target!")
+						return
+					end
+					table.insert(targets, plr)
+				end
+				renderTpTargets()
+				if refreshTargets then refreshTargets() end
+				if refreshEsp then refreshEsp() end
+			end)
+		end
+	end
+end
+
+Players.PlayerAdded:Connect(function() task.wait(0.2) renderTpTargets() end)
+Players.PlayerRemoving:Connect(function(plr)
+	local idx = table.find(targets, plr)
+	if idx then table.remove(targets, idx) end
+	task.wait(0.1)
+	renderTpTargets()
+	if refreshTargets then refreshTargets() end
+end)
+renderTpTargets()
+
 -- Tombol pintas melayang (bisa di-drag, bisa dikunci)
 local tpLocked = false
 local tpBtn = Instance.new("TextButton")
