@@ -62,6 +62,7 @@ local hbSize, hbTrans = 12, 0.7
 local hbRgb, tintOn, tintStrength = false, true, 45
 local wallOn, wallN, wallFacing, wallSpeed = false, Vector3.yAxis, Vector3.zAxis, 24
 local tpDepth = 8
+local attachOn, attachToggle = false, nil
 local targets, targetEspOn = {}, false
 local avatarHideOn, skelOn, skelOnlyTarget = false, false, false
 local clickOn, clickVol = true, 0.6
@@ -919,27 +920,53 @@ local function livePlayers(list)
 	return out
 end
 
--- TP tepat di bawah kaki pemain (target terpilih, kalau kosong acak), jarak vertikal diatur slider
-local function tpUnder()
-	local _, root = getChar()
-	if not root then return end
-	local pool = livePlayers(#targets > 0 and targets or Players:GetPlayers())
-	if #pool == 0 then
-		toast("Target tidak ditemukan")
-		return
+local attachTarget = nil
+
+RunService.Heartbeat:Connect(function()
+	if not attachOn then return end
+	local char, root, hum = getChar()
+	if not (char and root) then return end
+
+	if not (attachTarget and attachTarget.Parent and attachTarget.Character and attachTarget.Character:FindFirstChild("HumanoidRootPart")) then
+		local pool = livePlayers(#targets > 0 and targets or Players:GetPlayers())
+		attachTarget = pool[1]
 	end
-	local plr = pool[math.random(1, #pool)]
-	local tr = plr.Character.HumanoidRootPart
+
+	local tr = attachTarget and attachTarget.Character and attachTarget.Character:FindFirstChild("HumanoidRootPart")
+	if not tr then return end
+
+	for _, p in ipairs(char:GetDescendants()) do
+		if p:IsA("BasePart") and p.CanCollide then
+			p.CanCollide = false
+		end
+	end
+	if hum then hum.PlatformStand = true end
 	root.AssemblyLinearVelocity = Vector3.zero
+	root.AssemblyAngularVelocity = Vector3.zero
 	root.CFrame = CFrame.new(tr.Position.X, tr.Position.Y - 3 - tpDepth, tr.Position.Z)
-	toast("TP bawah kaki " .. plr.DisplayName)
-end
+end)
 
 addHeader(tA, "TP PEMAIN")
 addButton(tA, "TP Sayang Nyawa", tpRandom)
-addButton(tA, "TP Bawah Kaki", tpUnder)
-addSlider(tA, tA, "Jarak Vertikal", 1, 100, tpDepth, function(v) tpDepth = v end, " st", 500)
-addNote(tA, "TP Bawah Kaki memakai target dari tab TARGET (kalau kosong: acak). Aktifkan NoClip+Airwalk dulu supaya tidak jatuh ke bawah.")
+attachToggle = addToggle(tA, "Attach Bawah Tanah", function(on)
+	attachOn = on
+	attachTarget = nil
+	if on then
+		local pool = livePlayers(#targets > 0 and targets or Players:GetPlayers())
+		if #pool == 0 then
+			toast("Target tidak ditemukan")
+			attachToggle.set(false)
+			return
+		end
+		attachTarget = pool[1]
+		toast("Menempel di bawah " .. attachTarget.DisplayName)
+	else
+		local _, _, hum = getChar()
+		if hum then hum.PlatformStand = false end
+	end
+end)
+addSlider(tA, tA, "Kedalaman Tanah", 1, 100, tpDepth, function(v) tpDepth = v end, " st", 500)
+addNote(tA, "Attach Bawah Tanah otomatis mematikan tabrakan & mengunci posisimu diam tepat di bawah target (pakai target pilihan, atau pemain terdekat jika kosong).")
 
 addHeader(tB, "TP MANUAL TARGET")
 local tpTargetBtn = Instance.new("TextButton")
@@ -1841,6 +1868,7 @@ addPopup(pA, "Noclip", "NOCLIP", function() noclipToggle.set(not noclipToggle.on
 addPopup(pA, "Airwalk", "AIR", function() airToggle.set(not airToggle.on) end, airToggle)
 addPopup(pA, "NoClip+Airwalk", "NC+A", function() comboToggle.set(not comboToggle.on) end, comboToggle)
 addPopup(pA, "Speed Up", "SPEED", function() speedToggle.set(not speedToggle.on) end, speedToggle)
+addPopup(pA, "Attach Tanah", "ATTACH", function() attachToggle.set(not attachToggle.on) end, attachToggle)
 addPopup(pA, "ESP", "ESP", function() espToggle.set(not espToggle.on) end, espToggle)
 addPopup(pA, "ESP Target", "TARGET", function() targetEspToggle.set(not targetEspToggle.on) end, targetEspToggle)
 addPopup(pA, "Hitbox", "HIT", function() hbToggle.set(not hbToggle.on) end, hbToggle)
@@ -1849,7 +1877,6 @@ addPopup(pA, "Skeleton", "SKEL", function() skelToggle.set(not skelToggle.on) en
 
 addHeader(pB, "TOMBOL AKSI")
 addPopup(pB, "TP Acak", "TP", tpRandom)
-addPopup(pB, "TP Bawah Kaki", "TP\nBAWAH", tpUnder)
 addPopup(pB, "Bunuh Diri", "DEAD", doSuicide)
 addNote(pB, "Nyalakan 'Popup ...' untuk memunculkan tombol melayang. Geser untuk memindahkan. Kunci posisinya lewat 'Kunci Pop-up' di tab POPUP. Tombol ON/OFF berwarna hijau saat fiturnya aktif.")
 end
@@ -2225,7 +2252,7 @@ end))
 -- Unload (tombol DEL): matikan semua fitur, kembalikan kondisi, hapus menu
 ----------------------------------------------------------------
 unloadHub = function()
-	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, speedToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
+	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, speedToggle, attachToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
 		if t and t.on then pcall(t.set, false) end
 	end
 	tintTarget = 1
