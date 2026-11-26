@@ -927,9 +927,22 @@ RunService.Heartbeat:Connect(function()
 	local char, root, hum = getChar()
 	if not (char and root) then return end
 
+	if #targets > 0 then
+		local latest = targets[#targets]
+		if latest and latest.Parent and latest ~= player and latest ~= attachTarget then
+			local c = latest.Character
+			local r = c and c:FindFirstChild("HumanoidRootPart")
+			local h = c and c:FindFirstChildOfClass("Humanoid")
+			if r and h and h.Health > 0 then
+				attachTarget = latest
+				toast("Pindah ke " .. latest.DisplayName)
+			end
+		end
+	end
+
 	if not (attachTarget and attachTarget.Parent and attachTarget.Character and attachTarget.Character:FindFirstChild("HumanoidRootPart")) then
 		local pool = livePlayers(#targets > 0 and targets or Players:GetPlayers())
-		attachTarget = pool[1]
+		attachTarget = pool[#pool]
 	end
 
 	local tr = attachTarget and attachTarget.Character and attachTarget.Character:FindFirstChild("HumanoidRootPart")
@@ -1035,12 +1048,17 @@ local function renderTpTargets()
 				local idx = table.find(targets, plr)
 				if idx then
 					table.remove(targets, idx)
+					if attachTarget == plr then attachTarget = nil end
 				else
 					if #targets >= 3 then
 						toast("Maksimal 3 target!")
 						return
 					end
 					table.insert(targets, plr)
+					if attachOn then
+						attachTarget = plr
+						toast("Pindah ke " .. plr.DisplayName)
+					end
 				end
 				renderTpTargets()
 				if refreshTargets then refreshTargets() end
@@ -1355,11 +1373,16 @@ refreshResults = function()
 				for k, t in ipairs(targets) do
 					if t == plr then table.remove(targets, k) break end
 				end
+				if attachTarget == plr then attachTarget = nil end
 			elseif #targets >= MAX_TARGETS then
 				toast("Target penuh (maks " .. MAX_TARGETS .. ")")
 				return
 			else
 				table.insert(targets, plr)
+				if attachOn then
+					attachTarget = plr
+					toast("Pindah ke " .. plr.DisplayName)
+				end
 			end
 			refreshTargets()
 		end)
