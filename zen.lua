@@ -883,7 +883,7 @@ addNote(tA, "TP Bawah Kaki memakai target dari tab TARGET (kalau kosong: acak). 
 addHeader(tB, "TP MANUAL TARGET")
 local tpTargetBtn = Instance.new("TextButton")
 tpTargetBtn.Size = UDim2.new(1, 0, 0, 34)
-tpTargetBtn.BackgroundColor3 = Color3.fromRGB(40, 75, 150)
+tpTargetBtn.BackgroundColor3 = Color3.fromRGB(26, 26, 36)
 tpTargetBtn.Text = "TP ke Target Pilihan"
 tpTargetBtn.Font = Enum.Font.GothamBold
 tpTargetBtn.TextSize = 13
