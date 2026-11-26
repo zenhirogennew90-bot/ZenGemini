@@ -374,6 +374,36 @@ openBtn.Parent = gui
 corner(openBtn, 23)
 addStroke(openBtn, 2.5, 0.15)
 
+do
+	local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
+	openBtn.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = openBtn.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	openBtn.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+	UIS.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - dragStart
+			local screen = camera.ViewportSize
+			local newX = math.clamp(startPos.X.Offset + delta.X, 4, screen.X - 50)
+			local newY = math.clamp(startPos.Y.Offset + delta.Y, 4, screen.Y - 50)
+			openBtn.Position = UDim2.fromOffset(newX, newY)
+		end
+	end)
+end
+
 ----------------------------------------------------------------
 -- Builder komponen
 ----------------------------------------------------------------
