@@ -67,7 +67,7 @@ local avatarHideOn, skelOn = false, false
 local clickOn, clickVol = true, 0.6
 local isOpen = false
 local unloadHub, toggleCfg
-local targetEspToggle, avatarToggle, skelToggle, skelFolder, gfxToggle, xToggle
+local espToggle, targetEspToggle, avatarToggle, skelToggle, skelFolder, gfxToggle, xToggle
 local bv, bg, airPart, platY, origWalk
 
 ----------------------------------------------------------------
@@ -1016,11 +1016,7 @@ local function refreshEsp()
 	end
 end
 
-addHeader(vA, "ESP & HITBOX")
-local espToggle = addToggle(vA, "ESP Nama + Jarak", function(on)
-	espOn = on
-	refreshEsp()
-end)
+addHeader(vA, "HITBOX")
 
 local function hookPlayer(plr)
 	if plr == player then return end
@@ -1199,11 +1195,21 @@ track(Players.PlayerRemoving:Connect(function()
 	task.defer(refreshTargets)
 end))
 
+addHeader(rB, "PENGATURAN ESP")
+espToggle = addToggle(rB, "ESP Nama + Jarak", function(on)
+	espOn = on
+	refreshEsp()
+end)
 targetEspToggle = addToggle(rB, "ESP Target", function(on)
 	targetEspOn = on
 	refreshEsp()
 end)
-addNote(rB, "ESP target menampilkan nama (emas) + jarak hanya untuk target. Ketuk nama di hasil untuk memilih / membatalkan.")
+skelToggle = addToggle(rB, "Skeleton ESP", function(on)
+	skelOn = on
+	if not on then clearAllSkeletons() end
+end)
+addToggle(rB, "Skeleton Hanya Target", function(on) skelOnlyTarget = on end)
+addNote(rB, "ESP Target menandai target pilihan (emas). Aktifkan Skeleton Hanya Target agar rangka hanya muncul pada target.")
 refreshTargets()
 
 ----------------------------------------------------------------
@@ -1344,15 +1350,7 @@ avatarToggle = addToggle(aA, "Sembunyikan Avatar", function(on)
 	avatarHideOn = on
 	if not on then restoreAvatars() end
 end)
-skelToggle = addToggle(aA, "Skeleton ESP", function(on)
-	skelOn = on
-	if not on then clearAllSkeletons() end
-end)
-addNote(aA, "Sembunyikan Avatar hanya berlaku di layarmu. Nyalakan Skeleton ESP bersamaan agar posisi pemain lain tetap terlihat sebagai rangka.")
-addHeader(aB, "OPSI SKELETON")
-addToggle(aB, "Skeleton Hanya Target", function(on) skelOnlyTarget = on end)
-addNote(aB, "Kalau aktif, skeleton hanya muncul untuk target yang dipilih di tab TARGET.")
-end
+addNote(aA, "Sembunyikan Avatar hanya berlaku di layarmu. Nyalakan Skeleton ESP di tab TARGET agar posisi pemain lain tetap terlihat sebagai rangka.")
 
 ----------------------------------------------------------------
 -- Hitbox bulat
