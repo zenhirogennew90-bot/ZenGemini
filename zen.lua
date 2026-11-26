@@ -166,6 +166,7 @@ end
 local function playClick()
 	if not clickOn then return end
 	local snd = clickSounds[math.random(1, #clickSounds)]
+	snd.TimePosition = 0
 	snd.Volume = clickVol
 	snd.PlaybackSpeed = 0.95 + (math.random() * 0.1)
 	snd:Play()
@@ -2121,8 +2122,15 @@ pcall(function() getgenv().ZeFeraUnload = unloadHub end)
 
 -- Suara klik untuk semua tombol (termasuk yang dibuat belakangan)
 local function hookClick(d)
-	if d:IsA("GuiButton") then d.MouseButton1Click:Connect(playClick) end
+	if d:IsA("GuiButton") then
+		d.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				playClick()
+			end
+		end)
+	end
 end
+
 for _, d in ipairs(gui:GetDescendants()) do hookClick(d) end
 gui.DescendantAdded:Connect(hookClick)
 
@@ -2139,4 +2147,4 @@ if not __ok then
 			Duration = 10,
 		})
 	end)
-end
+end 
