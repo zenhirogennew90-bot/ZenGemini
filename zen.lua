@@ -1350,10 +1350,6 @@ avatarToggle = addToggle(aA, "Sembunyikan Avatar", function(on)
 	if not on then restoreAvatars() end
 end)
 addNote(aA, "Sembunyikan Avatar hanya berlaku di layarmu. Nyalakan Skeleton ESP di tab TARGET agar posisi pemain lain tetap terlihat sebagai rangka.")
-end
-
-----------------------------------------------------------------
--- Hitbox bulat
 
 ----------------------------------------------------------------
 -- Hitbox bulat
