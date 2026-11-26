@@ -316,12 +316,14 @@ local function showTab(i)
 	for k, p in ipairs(pages) do
 		if k == i then
 			p.Visible = true
-			p.Position = UDim.fromOffset(18, 0)
-			TweenService:Create(p, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = UDim2.fromOffset(0, 0) }):Play()
+			p.Position = UDim2.new(0, 18, 0, 0)
+			TweenService:Create(p, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = UDim2.new(0, 0, 0, 0) }):Play()
 		else
 			p.Visible = false
 		end
-		tabs[k].BackgroundColor3 = (k == i) and Color3.fromRGB(50, 90, 170) or Color3.fromRGB(26, 26, 36)
+		if tabs[k] then
+			tabs[k].BackgroundColor3 = (k == i) and Color3.fromRGB(50, 90, 170) or Color3.fromRGB(26, 26, 36)
+		end
 	end
 end
 
@@ -740,12 +742,8 @@ end)
 
 local speedToggle = addToggle(gB, "Speed Up", function(on)
 	speedUp = on
-	local _, _, hum = getChar()
-	if on and hum and not origWalk then
-		origWalk = hum.WalkSpeed
-	elseif not on and hum and origWalk then
-		hum.WalkSpeed = origWalk
-		origWalk = nil
+	if not on and player.Character and player.Character:FindFirstChildOfClass("Humanoid") and origWalk then
+		player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = origWalk
 	end
 end)
 
@@ -1332,7 +1330,6 @@ addToggle(rB, "Skeleton Hanya Target", function(on) skelOnlyTarget = on end)
 addNote(rB, "ESP Target menandai target pilihan (emas). Aktifkan Skeleton Hanya Target agar rangka hanya muncul pada target.")
 refreshTargets()
 end
-
 ----------------------------------------------------------------
 -- AVATAR: sembunyikan avatar pemain lain + skeleton ESP
 ----------------------------------------------------------------
@@ -1465,12 +1462,12 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
-addHeader(oA, "AVATAR PLAYER LAIN")
-avatarToggle = addToggle(oA, "Sembunyikan Avatar", function(on)
+addHeader(aA, "AVATAR PLAYER LAIN")
+avatarToggle = addToggle(aA, "Sembunyikan Avatar", function(on)
 	avatarHideOn = on
 	if not on then restoreAvatars() end
 end)
-addNote(oA, "Sembunyikan Avatar hanya berlaku di layarmu. Nyalakan Skeleton ESP di tab TARGET agar posisi pemain lain tetap terlihat sebagai rangka.")
+addNote(aA, "Sembunyikan Avatar hanya berlaku di layarmu. Nyalakan Skeleton ESP di tab TARGET agar posisi pemain lain tetap terlihat sebagai rangka.")
 
 ----------------------------------------------------------------
 -- Hitbox bulat
@@ -2216,6 +2213,7 @@ track(player.CharacterAdded:Connect(function()
 	if flyToggle.on then flyToggle.on = false flyToggle.set(false) end
 	if comboToggle.on then comboToggle.on = false comboToggle.set(false) end
 	if airToggle.on then airToggle.set(false) end
+
 end))
 
 ----------------------------------------------------------------
@@ -2223,7 +2221,7 @@ end))
 ----------------------------------------------------------------
 unloadHub = function()
 	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, speedToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
-		if t and t.on then pcall(t.set, false) end
+		if t.on then pcall(t.set, false) end
 	end
 	tintTarget = 1
 	for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
