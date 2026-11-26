@@ -62,7 +62,7 @@ local hbSize, hbTrans = 12, 0.7
 local hbRgb, tintOn, tintStrength = false, true, 45
 local wallOn, wallN, wallFacing, wallSpeed = false, Vector3.yAxis, Vector3.zAxis, 24
 local tpDepth = 8
-local attachOn, attachToggle = false, nil
+local attachOn, attachToggle, tpTarget = false, nil, nil
 local targets, targetEspOn = {}, false
 local avatarHideOn, skelOn, skelOnlyTarget = false, false, false
 local clickOn, clickVol = true, 0.6
@@ -920,32 +920,22 @@ local function livePlayers(list)
 	return out
 end
 
-local attachTarget = nil
-
 RunService.Heartbeat:Connect(function()
 	if not attachOn then return end
 	local char, root, hum = getChar()
 	if not (char and root) then return end
 
-	if #targets > 0 then
-		local latest = targets[#targets]
-		if latest and latest.Parent and latest ~= player and latest ~= attachTarget then
-			local c = latest.Character
-			local r = c and c:FindFirstChild("HumanoidRootPart")
-			local h = c and c:FindFirstChildOfClass("Humanoid")
-			if r and h and h.Health > 0 then
-				attachTarget = latest
-				toast("Pindah ke " .. latest.DisplayName)
-			end
-		end
+	if not (tpTarget and tpTarget.Parent) then
+		tpTarget = nil
 	end
 
-	if not (attachTarget and attachTarget.Parent and attachTarget.Character and attachTarget.Character:FindFirstChild("HumanoidRootPart")) then
-		local pool = livePlayers(#targets > 0 and targets or Players:GetPlayers())
-		attachTarget = pool[#pool]
+	local current = tpTarget
+	if not current then
+		local pool = livePlayers(Players:GetPlayers())
+		current = pool[1]
 	end
 
-	local tr = attachTarget and attachTarget.Character and attachTarget.Character:FindFirstChild("HumanoidRootPart")
+	local tr = current and current.Character and current.Character:FindFirstChild("HumanoidRootPart")
 	if not tr then return end
 
 	for _, p in ipairs(char:GetDescendants()) do
@@ -963,23 +953,21 @@ addHeader(tA, "TP PEMAIN")
 addButton(tA, "TP Sayang Nyawa", tpRandom)
 attachToggle = addToggle(tA, "Attach Bawah Tanah", function(on)
 	attachOn = on
-	attachTarget = nil
 	if on then
-		local pool = livePlayers(#targets > 0 and targets or Players:GetPlayers())
-		if #pool == 0 then
+		local current = tpTarget or livePlayers(Players:GetPlayers())[1]
+		if not current then
 			toast("Target tidak ditemukan")
 			attachToggle.set(false)
 			return
 		end
-		attachTarget = pool[1]
-		toast("Menempel di bawah " .. attachTarget.DisplayName)
+		toast("Menempel di bawah " .. current.DisplayName)
 	else
 		local _, _, hum = getChar()
 		if hum then hum.PlatformStand = false end
 	end
 end)
 addSlider(tA, tA, "Kedalaman Tanah", 1, 100, tpDepth, function(v) tpDepth = v end, " st", 500)
-addNote(tA, "Attach Bawah Tanah otomatis mematikan tabrakan & mengunci posisimu diam tepat di bawah target (pakai target pilihan, atau pemain terdekat jika kosong).")
+addNote(tA, "Attach Bawah Tanah mengunci posisimu diam tepat di bawah 1 player pilihan di samping (atau pemain acak jika belum dipilih).")
 
 addHeader(tB, "TP MANUAL TARGET")
 local tpTargetBtn = Instance.new("TextButton")
@@ -998,22 +986,16 @@ registerPanel(tpTargetBtn)
 tpTargetBtn.MouseButton1Click:Connect(function()
 	local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if not myRoot then return end
-	local valid = {}
-	for _, p in ipairs(targets) do
-		if p and p.Parent and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-			table.insert(valid, p)
-		end
-	end
-	if #valid == 0 then
-		toast("Pilih target dulu di daftar!")
+	if not (tpTarget and tpTarget.Parent and tpTarget.Character and tpTarget.Character:FindFirstChild("HumanoidRootPart")) then
+		toast("Pilih 1 target dulu di daftar!")
 		return
 	end
-	local chosen = valid[math.random(1, #valid)]
-	myRoot.CFrame = chosen.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-	toast("TP ke " .. chosen.DisplayName)
+	myRoot.AssemblyLinearVelocity = Vector3.zero
+	myRoot.CFrame = tpTarget.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+	toast("TP ke " .. tpTarget.DisplayName)
 end)
 
-addHeader(tB, "PILIH TARGET (SERVER)")
+addHeader(tB, "PILIH 1 TARGET TP")
 local tpListFrame = Instance.new("Frame")
 tpListFrame.Size = UDim2.new(1, 0, 0, 0)
 tpListFrame.AutomaticSize = Enum.AutomaticSize.Y
@@ -1031,7 +1013,7 @@ local function renderTpTargets()
 	end
 	for _, plr in ipairs(Players:GetPlayers()) do
 		if plr ~= player then
-			local selected = table.find(targets, plr) ~= nil
+			local selected = (tpTarget == plr)
 			local btn = Instance.new("TextButton")
 			btn.Size = UDim2.new(1, 0, 0, 30)
 			btn.BackgroundColor3 = selected and Color3.fromRGB(50, 90, 170) or Color3.fromRGB(26, 26, 36)
@@ -1045,24 +1027,18 @@ local function renderTpTargets()
 			registerPanel(btn)
 
 			btn.MouseButton1Click:Connect(function()
-				local idx = table.find(targets, plr)
-				if idx then
-					table.remove(targets, idx)
-					if attachTarget == plr then attachTarget = nil end
+				if tpTarget == plr then
+					tpTarget = nil
+					toast("Target TP dilepas")
 				else
-					if #targets >= 3 then
-						toast("Maksimal 3 target!")
-						return
-					end
-					table.insert(targets, plr)
+					tpTarget = plr
 					if attachOn then
-						attachTarget = plr
-						toast("Pindah ke " .. plr.DisplayName)
+						toast("Attach pindah ke " .. plr.DisplayName)
+					else
+						toast("Target TP: " .. plr.DisplayName)
 					end
 				end
 				renderTpTargets()
-				if refreshTargets then refreshTargets() end
-				if refreshEsp then refreshEsp() end
 			end)
 		end
 	end
@@ -1070,11 +1046,9 @@ end
 
 Players.PlayerAdded:Connect(function() task.wait(0.2) renderTpTargets() end)
 Players.PlayerRemoving:Connect(function(plr)
-	local idx = table.find(targets, plr)
-	if idx then table.remove(targets, idx) end
+	if tpTarget == plr then tpTarget = nil end
 	task.wait(0.1)
 	renderTpTargets()
-	if refreshTargets then refreshTargets() end
 end)
 renderTpTargets()
 
@@ -1373,16 +1347,11 @@ refreshResults = function()
 				for k, t in ipairs(targets) do
 					if t == plr then table.remove(targets, k) break end
 				end
-				if attachTarget == plr then attachTarget = nil end
 			elseif #targets >= MAX_TARGETS then
 				toast("Target penuh (maks " .. MAX_TARGETS .. ")")
 				return
 			else
 				table.insert(targets, plr)
-				if attachOn then
-					attachTarget = plr
-					toast("Pindah ke " .. plr.DisplayName)
-				end
 			end
 			refreshTargets()
 		end)
