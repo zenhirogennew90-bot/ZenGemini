@@ -2037,7 +2037,250 @@ end)
 -- Panel Config (simpan / muat manual, 3 slot) - jendela terpisah
 ----------------------------------------------------------------
 do
-local HttpService = game:GetService("HttpService")
+	local HttpService = game:GetService("HttpService")
+	local CFG_DIR = "ZeFera"
+	local AUTO_PATH = CFG_DIR .. "/autoload.json"
+	local cfgSlot, autoLoadOn, cfgOpen = 1, false, false
+
+	local function cfgPath(slot) return CFG_DIR .. "/slot" .. slot .. ".json" end
+
+	local function collectCfg()
+		local data = { toggles = {}, sliders = {} }
+		for k, t in pairs(toggleReg) do data.toggles[k] = t.on end
+		for k, sl in pairs(sliderReg) do data.sliders[k] = sl.get() end
+		local p = tpBtn.Position
+		data.tp = { p.X.Scale, p.X.Offset, p.Y.Scale, p.Y.Offset }
+		return data
+	end
+
+	local function applyCfg(data)
+		if type(data) ~= "table" then return end
+		for k, v in pairs(data.sliders or {}) do
+			local sl = sliderReg[k]
+			if sl and type(v) == "number" then sl.set(v) end
+		end
+		local keys = {}
+		for k, v in pairs(data.toggles or {}) do
+			if toggleReg[k] and type(v) == "boolean" then table.insert(keys, k) end
+		end
+		table.sort(keys, function(a, b)
+			if a == "NoClip+Airwalk" then return b ~= a end
+			if b == "NoClip+Airwalk" then return false end
+			return a < b
+		end)
+		for _, k in ipairs(keys) do
+			local t = toggleReg[k]
+			local v = data.toggles[k]
+			if t.on ~= v then t.set(v) end
+		end
+		if type(data.tp) == "table" and #data.tp == 4 then
+			tpBtn.Position = UDim2.new(data.tp[1], data.tp[2], data.tp[3], data.tp[4])
+		end
+	end
+
+	local cfgDefaults = collectCfg()
+
+	local function saveSlot(slot)
+		if not (writefile and readfile and isfile) then return false, "Executor tidak mendukung simpan file" end
+		pcall(function()
+			if makefolder and not (isfolder and isfolder(CFG_DIR)) then makefolder(CFG_DIR) end
+		end)
+		local ok = pcall(function()
+			writefile(cfgPath(slot), HttpService:JSONEncode(collectCfg()))
+		end)
+		return ok, ok and ("Tersimpan di Slot " .. slot) or "Gagal menyimpan"
+	end
+
+	local function loadSlot(slot)
+		if not (readfile and isfile) then return false, "Executor tidak mendukung baca file" end
+		local path = cfgPath(slot)
+		if not isfile(path) then return false, "Slot " .. slot .. " masih kosong" end
+		local ok, data = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
+		if not ok then return false, "File config rusak" end
+		applyCfg(data)
+		return true, "Slot " .. slot .. " dimuat"
+	end
+
+	local function saveAutoState()
+		if not writefile then return end
+		pcall(function()
+			if makefolder and not (isfolder and isfolder(CFG_DIR)) then makefolder(CFG_DIR) end
+			writefile(AUTO_PATH, HttpService:JSONEncode({ enabled = autoLoadOn, slot = cfgSlot }))
+		end)
+	end
+
+	local function refreshAutoBtn()
+		if autoCfgBtn then
+			autoCfgBtn.BackgroundColor3 = autoLoadOn and Color3.fromRGB(40, 135, 75) or Color3.fromRGB(30, 30, 42)
+		end
+	end
+
+	local CFG_W, CFG_H = 250, 176
+	local cfgFrame = Instance.new("Frame")
+	cfgFrame.Size = UDim2.fromOffset(CFG_W, 0)
+	cfgFrame.Position = UDim2.new(0.5, -125, 0.3, 0)
+	cfgFrame.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
+	cfgFrame.BorderSizePixel = 0
+	cfgFrame.ClipsDescendants = true
+	cfgFrame.Visible = false
+	cfgFrame.Parent = gui
+	corner(cfgFrame, 14)
+	addStroke(cfgFrame, 2.5, 0.5)
+	registerPanel(cfgFrame)
+
+	local cfgHeader = Instance.new("Frame")
+	cfgHeader.Size = UDim2.new(1, 0, 0, 36)
+	cfgHeader.BackgroundTransparency = 1
+	cfgHeader.Active = true
+	cfgHeader.Parent = cfgFrame
+
+	local cfgTitle = Instance.new("TextLabel")
+	cfgTitle.Size = UDim2.new(1, -50, 1, 0)
+	cfgTitle.Position = UDim2.fromOffset(12, 0)
+	cfgTitle.BackgroundTransparency = 1
+	cfgTitle.Text = "CONFIG"
+	cfgTitle.Font = Enum.Font.GothamBlack
+	cfgTitle.TextSize = 15
+	cfgTitle.TextColor3 = Color3.new(1, 1, 1)
+	cfgTitle.TextXAlignment = Enum.TextXAlignment.Left
+	cfgTitle.Parent = cfgHeader
+
+	local cfgClose = Instance.new("TextButton")
+	cfgClose.Size = UDim2.fromOffset(28, 26)
+	cfgClose.Position = UDim2.new(1, -36, 0, 5)
+	cfgClose.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+	cfgClose.Text = "X"
+	cfgClose.Font = Enum.Font.GothamBold
+	cfgClose.TextSize = 14
+	cfgClose.TextColor3 = Color3.new(1, 1, 1)
+	cfgClose.Parent = cfgHeader
+	corner(cfgClose, 8)
+
+	local function cfgButton(text, x, y, w, h, cb)
+		local b = Instance.new("TextButton")
+		b.Size = UDim2.fromOffset(w, h)
+		b.Position = UDim2.fromOffset(x, y)
+		b.BackgroundColor3 = Color3.fromRGB(26, 26, 36)
+		b.Text = text
+		b.Font = Enum.Font.GothamBold
+		b.TextSize = 13
+		b.TextColor3 = Color3.new(1, 1, 1)
+		b.Parent = cfgFrame
+		corner(b, 10)
+		addStroke(b, 1.5, x / 250)
+		registerPanel(b)
+		b.MouseButton1Click:Connect(cb)
+		return b
+	end
+
+	local statusLbl = Instance.new("TextLabel")
+	statusLbl.Size = UDim2.fromOffset(230, 36)
+	statusLbl.Position = UDim2.fromOffset(10, 124)
+	statusLbl.BackgroundTransparency = 1
+	statusLbl.Font = Enum.Font.GothamMedium
+	statusLbl.TextSize = 12
+	statusLbl.TextWrapped = true
+	statusLbl.TextXAlignment = Enum.TextXAlignment.Left
+	statusLbl.TextYAlignment = Enum.TextYAlignment.Top
+	statusLbl.TextColor3 = Color3.fromRGB(185, 185, 205)
+	statusLbl.Text = ""
+	statusLbl.Parent = cfgFrame
+
+	local function setStatus(text, color)
+		statusLbl.Text = text
+		statusLbl.TextColor3 = color or Color3.fromRGB(185, 185, 205)
+	end
+
+	local slotBtns = {}
+	local function selectSlot(n)
+		cfgSlot = n
+		for i, b in ipairs(slotBtns) do
+			b.BackgroundColor3 = (i == n) and Color3.fromRGB(50, 90, 170) or Color3.fromRGB(26, 26, 36)
+		end
+		local has = false
+		if isfile then pcall(function() has = isfile(cfgPath(n)) end) end
+		setStatus("Slot " .. n .. (has and ": ada config tersimpan" or ": masih kosong"), Color3.fromRGB(185, 185, 205))
+		if autoLoadOn then saveAutoState() end
+	end
+
+	for i = 1, 3 do
+		slotBtns[i] = cfgButton("Slot " .. i, 10 + (i - 1) * 78, 42, 74, 30, function() selectSlot(i) end)
+	end
+
+	cfgButton("Save", 10, 80, 74, 34, function()
+		local ok, msg = saveSlot(cfgSlot)
+		setStatus(msg, ok and Color3.fromRGB(90, 230, 130) or Color3.fromRGB(255, 100, 110))
+	end)
+	cfgButton("Load", 88, 80, 74, 34, function()
+		local ok, msg = loadSlot(cfgSlot)
+		setStatus(msg, ok and Color3.fromRGB(90, 230, 130) or Color3.fromRGB(255, 100, 110))
+	end)
+	cfgButton("Reset", 166, 80, 74, 34, function()
+		applyCfg(cfgDefaults)
+		setStatus("Pengaturan dikembalikan ke default", Color3.fromRGB(90, 230, 130))
+	end)
+
+	toggleCfg = function()
+		cfgOpen = not cfgOpen
+		if cfgOpen then
+			cfgFrame.Visible = true
+			cfgFrame.Size = UDim2.fromOffset(CFG_W, 0)
+			TweenService:Create(cfgFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.fromOffset(CFG_W, CFG_H) }):Play()
+			selectSlot(cfgSlot)
+		else
+			local t = TweenService:Create(cfgFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Size = UDim2.fromOffset(CFG_W, 0) })
+			t.Completed:Connect(function()
+				if not cfgOpen then cfgFrame.Visible = false end
+			end)
+			t:Play()
+		end
+	end
+	cfgClose.MouseButton1Click:Connect(function() if cfgOpen then toggleCfg() end end)
+
+	if autoCfgBtn then
+		autoCfgBtn.MouseButton1Click:Connect(function()
+			autoLoadOn = not autoLoadOn
+			refreshAutoBtn()
+			saveAutoState()
+			toast(autoLoadOn and ("Autoload ON (Slot " .. cfgSlot .. ")") or "Autoload OFF")
+		end)
+	end
+
+	do
+		local dragging, dragStart, startPos
+		cfgHeader.InputBegan:Connect(function(i)
+			if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+				dragging, dragStart, startPos = true, i.Position, cfgFrame.Position
+			end
+		end)
+		UIS.InputChanged:Connect(function(i)
+			if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+				local d = i.Position - dragStart
+				cfgFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+			end
+		end)
+		UIS.InputEnded:Connect(function(i)
+			if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+				dragging = false
+			end
+		end)
+	end
+
+	if readfile and isfile and isfile(AUTO_PATH) then
+		local ok, info = pcall(function() return HttpService:JSONDecode(readfile(AUTO_PATH)) end)
+		if ok and type(info) == "table" then
+			cfgSlot = math.clamp(tonumber(info.slot) or 1, 1, 3)
+			autoLoadOn = info.enabled == true
+			refreshAutoBtn()
+			if autoLoadOn then
+				task.defer(function()
+					local loaded, msg = loadSlot(cfgSlot)
+					if loaded then toast("Autoload: " .. msg) end
+				end)
+			end
+		end
+	end
+end
 local CFG_DIR = "ZeFera"
 local function cfgPath(slot) return CFG_DIR .. "/slot" .. slot .. ".json" end
 
