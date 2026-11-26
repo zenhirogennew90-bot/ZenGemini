@@ -152,24 +152,22 @@ end
 -- Suara klik lucu: 3 efek bawaan Roblox dengan nada acak (pop / boing / cicit)
 local SoundService = game:GetService("SoundService")
 local clickSounds = {}
-for _, id in ipairs({
-	"rbxassetid://6042053626",
-	"rbxassetid://8769398308",
-	"rbxassetid://5041042777",
-}) do
-	local snd = Instance.new("Sound")
-	snd.SoundId = id
-	snd.Volume = clickVol
-	snd.Parent = gui -- Ditempel langsung ke UI ZeFera Hub (dijamin 100% lokal)
-	table.insert(clickSounds, snd)
-end
+local baseClick = Instance.new("Sound")
+baseClick.SoundId = "rbxassetid://6042053626"
+baseClick.Volume = clickVol
+baseClick.Parent = gui
+table.insert(clickSounds, baseClick)
+pcall(function() game:GetService("ContentProvider"):PreloadAsync({ baseClick }) end)
+
 local function playClick()
 	if not clickOn then return end
-	local snd = clickSounds[math.random(1, #clickSounds)]
-	snd.TimePosition = 0
+	local snd = baseClick:Clone()
 	snd.Volume = clickVol
-	snd.PlaybackSpeed = 0.95 + (math.random() * 0.1)
+	snd.PlaybackSpeed = 0.96 + (math.random() * 0.08)
+	snd.Parent = gui
 	snd:Play()
+	snd.Ended:Connect(function() snd:Destroy() end)
+	task.delay(1, function() if snd.Parent then snd:Destroy() end end)
 end
 
 local vp = camera.ViewportSize
@@ -2147,4 +2145,4 @@ if not __ok then
 			Duration = 10,
 		})
 	end)
-end 
+end
