@@ -740,23 +740,6 @@ comboToggle = addToggle(gA, "NoClip+Airwalk", function(on)
 	if airToggle.on ~= on then airToggle.set(on) end
 end)
 
-local speedToggle = addToggle(gB, "Speed Up", function(on)
-	speedUp = on
-	local _, _, hum = getChar()
-	if on and hum and not origWalk then
-		origWalk = hum.WalkSpeed
-	elseif not on and hum and origWalk then
-		hum.WalkSpeed = origWalk
-		origWalk = nil
-	end
-end)
-
-RunService.Heartbeat:Connect(function()
-	if not speedUp then return end
-	local _, _, hum = getChar()
-	if hum then hum.WalkSpeed = walkSpeed end
-end)
-
 -- Jalan di dinding: kamera ikut permukaan, gerak & kamera halus, animasi jalan normal
 addHeader(gB, "MOVEMENT+")
 local wallRay = RaycastParams.new()
@@ -823,6 +806,54 @@ local function doSuicide()
 	if char then pcall(function() char:BreakJoints() end) end
 end
 addButton(gB, "Bunuh Diri", doSuicide)
+
+local speedToggle = addToggle(gB, "Speed Up", function(on)
+	speedUp = on
+	local _, _, hum = getChar()
+	if on and hum and not origWalk then
+		origWalk = hum.WalkSpeed
+	elseif not on and hum and origWalk then
+		hum.WalkSpeed = origWalk
+		origWalk = nil
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if not speedUp then return end
+	local _, _, hum = getChar()
+	if hum then hum.WalkSpeed = walkSpeed end
+end)
+
+addSlider(gB, gB, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, nil, 1000)
+addSlider(gB, gB, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v end, nil, 500)
+
+do
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(1, 0, 0, 34)
+	row.BackgroundTransparency = 1
+	row.LayoutOrder = nextOrder()
+	row.Parent = gB
+
+	local function mk(text, xScale, xOff, setter)
+		local b = Instance.new("TextButton")
+		b.Size = UDim2.new(0.5, -4, 1, 0)
+		b.Position = UDim2.new(xScale, xOff, 0, 0)
+		b.BackgroundColor3 = Color3.fromRGB(26, 26, 36)
+		b.Text = text
+		b.Font = Enum.Font.GothamBold
+		b.TextSize = 13
+		b.TextColor3 = Color3.new(1, 1, 1)
+		b.Parent = row
+		corner(b, 10)
+		addStroke(b, 1.5, xScale + 0.6)
+		registerPanel(b)
+		b.MouseButton1Down:Connect(function() setter(true) end)
+		b.MouseButton1Up:Connect(function() setter(false) end)
+		b.MouseLeave:Connect(function() setter(false) end)
+	end
+	mk("UP", 0, 0, function(v) up = v end)
+	mk("DOWN", 0.5, 4, function(v) down = v end)
+end
 
 local savedLight
 addHeader(oA, "PENCAHAYAAN")
@@ -1826,13 +1857,10 @@ end
 ----------------------------------------------------------------
 -- PENGATURAN
 ----------------------------------------------------------------
-addHeader(sA, "KECEPATAN")
-addHeader(sB, "TAMPILAN MENU")
-addSlider(sA, sA, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, nil, 1000)
-addSlider(sA, sA, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v end, nil, 500)
-addSlider(sB, sB, "Transparansi Menu", 0, 80, 0, function(v) applyMenuTransparency(v / 100) end, "%")
+addHeader(sA, "TAMPILAN MENU")
+addSlider(sA, sA, "Transparansi Menu", 0, 80, 0, function(v) applyMenuTransparency(v / 100) end, "%")
 local maxW = math.max(420, math.floor(camera.ViewportSize.X - 20))
-addSlider(sB, sB, "Lebar Menu", 360, maxW, math.min(MENU_W, maxW), function(v)
+addSlider(sA, sA, "Lebar Menu", 360, maxW, math.min(MENU_W, maxW), function(v)
 	MENU_W = v
 	FULL = UDim2.fromOffset(MENU_W, MENU_H)
 	CLOSED = UDim2.fromOffset(MENU_W, 0)
@@ -1841,37 +1869,10 @@ addSlider(sB, sB, "Lebar Menu", 360, maxW, math.min(MENU_W, maxW), function(v)
 	end
 end, " px")
 
+addHeader(sB, "AUDIO")
 local soundToggle = addToggle(sB, "Suara Klik Lucu", function(on) clickOn = on end)
 soundToggle.set(true)
 addSlider(sB, sB, "Volume Klik", 0, 100, math.floor(clickVol * 100), function(v) clickVol = v / 100 end, "%")
-
-do
-	local row = Instance.new("Frame")
-	row.Size = UDim2.new(1, 0, 0, 34)
-	row.BackgroundTransparency = 1
-	row.LayoutOrder = nextOrder()
-	row.Parent = sA
-
-	local function mk(text, xScale, xOff, setter)
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(0.5, -4, 1, 0)
-		b.Position = UDim2.new(xScale, xOff, 0, 0)
-		b.BackgroundColor3 = Color3.fromRGB(26, 26, 36)
-		b.Text = text
-		b.Font = Enum.Font.GothamBold
-		b.TextSize = 13
-		b.TextColor3 = Color3.new(1, 1, 1)
-		b.Parent = row
-		corner(b, 10)
-		addStroke(b, 1.5, xScale + 0.6)
-		registerPanel(b)
-		b.MouseButton1Down:Connect(function() setter(true) end)
-		b.MouseButton1Up:Connect(function() setter(false) end)
-		b.MouseLeave:Connect(function() setter(false) end)
-	end
-	mk("UP", 0, 0, function(v) up = v end)
-	mk("DOWN", 0.5, 4, function(v) down = v end)
-end
 
 ----------------------------------------------------------------
 -- Gerakan fly
