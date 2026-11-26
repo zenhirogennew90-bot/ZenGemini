@@ -932,16 +932,15 @@ local function renderTpTargets()
 		if plr ~= player then
 			local selected = table.find(targets, plr) ~= nil
 			local btn = Instance.new("TextButton")
-			btn.Size = UDim2.new(1, 0, 0, 28)
-			btn.BackgroundColor3 = selected and Color3.fromRGB(160, 115, 25) or Color3.fromRGB(26, 26, 36)
-			btn.Text = (selected and "★ " or "") .. plr.DisplayName
-			btn.Font = Enum.Font.GothamBold
+			btn.Size = UDim2.new(1, 0, 0, 30)
+			btn.BackgroundColor3 = selected and Color3.fromRGB(50, 90, 170) or Color3.fromRGB(26, 26, 36)
+			btn.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+			btn.Font = Enum.Font.GothamMedium
 			btn.TextSize = 12
 			btn.TextColor3 = Color3.new(1, 1, 1)
 			btn.TextTruncate = Enum.TextTruncate.AtEnd
 			btn.Parent = tpListFrame
-			corner(btn, 8)
-			addStroke(btn, 1, 0.05)
+			corner(btn, 9)
 			registerPanel(btn)
 
 			btn.MouseButton1Click:Connect(function()
