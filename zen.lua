@@ -742,8 +742,12 @@ end)
 
 local speedToggle = addToggle(gB, "Speed Up", function(on)
 	speedUp = on
-	if not on and player.Character and player.Character:FindFirstChildOfClass("Humanoid") and origWalk then
-		player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = origWalk
+	local _, _, hum = getChar()
+	if on and hum and not origWalk then
+		origWalk = hum.WalkSpeed
+	elseif not on and hum and origWalk then
+		hum.WalkSpeed = origWalk
+		origWalk = nil
 	end
 end)
 
@@ -1462,12 +1466,12 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
-addHeader(aA, "AVATAR PLAYER LAIN")
-avatarToggle = addToggle(aA, "Sembunyikan Avatar", function(on)
+addHeader(oA, "AVATAR PLAYER LAIN")
+avatarToggle = addToggle(oA, "Sembunyikan Avatar", function(on)
 	avatarHideOn = on
 	if not on then restoreAvatars() end
 end)
-addNote(aA, "Sembunyikan Avatar hanya berlaku di layarmu. Nyalakan Skeleton ESP di tab TARGET agar posisi pemain lain tetap terlihat sebagai rangka.")
+addNote(oA, "Sembunyikan Avatar hanya berlaku di layarmu. Nyalakan Skeleton ESP di tab TARGET agar posisi pemain lain tetap terlihat sebagai rangka.")
 
 ----------------------------------------------------------------
 -- Hitbox bulat
@@ -2221,7 +2225,7 @@ end))
 ----------------------------------------------------------------
 unloadHub = function()
 	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, speedToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
-		if t.on then pcall(t.set, false) end
+		if t and t.on then pcall(t.set, false) end
 	end
 	tintTarget = 1
 	for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
