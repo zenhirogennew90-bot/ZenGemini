@@ -63,7 +63,7 @@ local hbRgb, tintOn, tintStrength = false, true, 45
 local wallOn, wallN, wallFacing, wallSpeed = false, Vector3.yAxis, Vector3.zAxis, 24
 local tpDepth = 8
 local targets, targetEspOn = {}, false
-local avatarHideOn, skelOn = false, false
+local avatarHideOn, skelOn, skelOnlyTarget = false, false, false
 local clickOn, clickVol = true, 0.6
 local isOpen = false
 local unloadHub, toggleCfg
@@ -1211,13 +1211,12 @@ end)
 addToggle(rB, "Skeleton Hanya Target", function(on) skelOnlyTarget = on end)
 addNote(rB, "ESP Target menandai target pilihan (emas). Aktifkan Skeleton Hanya Target agar rangka hanya muncul pada target.")
 refreshTargets()
-
+end
 ----------------------------------------------------------------
 -- AVATAR: sembunyikan avatar pemain lain + skeleton ESP
 ----------------------------------------------------------------
 local avatarSaved = setmetatable({}, { __mode = "k" })
 local skelObjs = {}
-local skelOnlyTarget = false
 skelFolder = Instance.new("Folder")
 skelFolder.Name = "ZeFeraSkeleton"
 skelFolder.Parent = camera
@@ -1351,6 +1350,10 @@ avatarToggle = addToggle(aA, "Sembunyikan Avatar", function(on)
 	if not on then restoreAvatars() end
 end)
 addNote(aA, "Sembunyikan Avatar hanya berlaku di layarmu. Nyalakan Skeleton ESP di tab TARGET agar posisi pemain lain tetap terlihat sebagai rangka.")
+end
+
+----------------------------------------------------------------
+-- Hitbox bulat
 
 ----------------------------------------------------------------
 -- Hitbox bulat
