@@ -1860,8 +1860,11 @@ RunService.RenderStepped:Connect(function()
 	local _, root, hum = getChar()
 	if not (root and hum and bv and bg) then return end
 
+	hum.PlatformStand = true
 	local cf = camera.CFrame
 	local md = hum.MoveDirection
+	if md.Magnitude <= 0.15 then md = Vector3.zero end
+
 	local fl = Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z)
 	local fr = Vector3.new(cf.RightVector.X, 0, cf.RightVector.Z)
 	fl = fl.Magnitude > 0 and fl.Unit or Vector3.zero
@@ -1871,7 +1874,13 @@ RunService.RenderStepped:Connect(function()
 	if up then dir += Vector3.yAxis end
 	if down then dir -= Vector3.yAxis end
 
-	bv.Velocity = dir * flySpeed
+	if dir.Magnitude > 0.01 then
+		bv.Velocity = dir.Unit * flySpeed
+	else
+		bv.Velocity = Vector3.zero
+		root.AssemblyLinearVelocity = Vector3.zero
+	end
+
 	if flyLockOn then
 		flyLockCF = flyLockCF or root.CFrame.Rotation
 		bg.CFrame = flyLockCF
