@@ -818,7 +818,12 @@ addSlider(gB, gB, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v en
 #ff5c98ff
 do
 	local uis = game:GetService("UserInputService")
-	local udBox = Instance.new("Frame")
+addSlider(gB, gB, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, nil, 1000)
+addSlider(gB, gB, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v end, nil, 500)
+
+do
+	local uis = game:GetService("UserInputService")
+    	local udBox = Instance.new("Frame")
 	udBox.Name = "MultiUpDown"
 	udBox.Size = UDim2.fromOffset(146, 66)
 	udBox.Position = UDim2.new(0.5, -73, 0.78, 0)
@@ -1563,64 +1568,8 @@ do
 	end))
 end
 
-addHeader(vA, "KAMERA")
+addHeader(vA, "FREECAM")
 do
-	local origMinZoom, origMaxZoom = nil, nil
-
-	local function saveZoomOnce()
-		if origMinZoom == nil then origMinZoom = player.CameraMinZoomDistance end
-		if origMaxZoom == nil then origMaxZoom = player.CameraMaxZoomDistance end
-	end
-
-	local function restoreZoom()
-		if origMinZoom ~= nil then player.CameraMinZoomDistance = origMinZoom end
-		if origMaxZoom ~= nil then player.CameraMaxZoomDistance = origMaxZoom end
-		origMinZoom, origMaxZoom = nil, nil
-	end
-
-	force3rdToggle = addToggle(vA, "Paksa Orang Ketiga", function(on)
-		force3rdOn = on
-		if on then
-			if force1stOn and force1stToggle then force1stToggle.set(false) end
-			saveZoomOnce()
-			player.CameraMinZoomDistance = 8
-			player.CameraMaxZoomDistance = maxZoomDist
-		else
-			if not force1stOn then restoreZoom() end
-		end
-	end)
-
-	force1stToggle = addToggle(vA, "Paksa Orang Pertama", function(on)
-		force1stOn = on
-		if on then
-			if force3rdOn and force3rdToggle then force3rdToggle.set(false) end
-			saveZoomOnce()
-			player.CameraMinZoomDistance = 0.5
-			player.CameraMaxZoomDistance = 0.5
-		else
-			if not force3rdOn then restoreZoom() end
-		end
-	end)
-
-	addSlider(vA, vA, "Jarak Zoom 3rd", 30, 1000, maxZoomDist, function(v)
-		maxZoomDist = v
-		if force3rdOn then
-			player.CameraMaxZoomDistance = maxZoomDist
-		end
-	end, "", 500)
-
-	track(RunService.Heartbeat:Connect(function()
-		if force3rdOn then
-			player.CameraMinZoomDistance = math.max(player.CameraMinZoomDistance, 5)
-			player.CameraMaxZoomDistance = maxZoomDist
-		elseif force1stOn then
-			player.CameraMinZoomDistance = 0.5
-			player.CameraMaxZoomDistance = 0.5
-		end
-	end))
-end
-
-addHeader(vA, "FREECAM")do
 	local fcPos = Vector3.zero
 	local fcPitch, fcYaw = 0, 0
 	local oldCamType, oldCamSubj, oldWalkSpeed = nil, nil, nil
@@ -2086,12 +2035,13 @@ do
 	addPopup(pA, "Speed Up", "SPEED", function() speedToggle.set(not speedToggle.on) end, speedToggle)
 	addPopup(pA, "Attach Tanah", "ATTACH", function() attachToggle.set(not attachToggle.on) end, attachToggle)
 	addPopup(pA, "Spectate", "SPEC", function() spectateToggle.set(not spectateToggle.on) end, spectateToggle)
+	addPopup(pA, "Freecam", "FREE", function() freecamToggle.set(not freecamToggle.on) end, freecamToggle)
 	addPopup(pA, "3rd Person", "3RD", function() force3rdToggle.set(not force3rdToggle.on) end, force3rdToggle)
 	addPopup(pA, "1st Person", "1ST", function() force1stToggle.set(not force1stToggle.on) end, force1stToggle)
 	addPopup(pA, "ESP", "ESP", function() espToggle.set(not espToggle.on) end, espToggle)
 	addPopup(pA, "ESP Target", "TARGET", function() targetEspToggle.set(not targetEspToggle.on) end, targetEspToggle)
 	addPopup(pA, "Hitbox", "HIT", function() hbToggle.set(not hbToggle.on) end, hbToggle)
-	addPopup(pA, "Hide Avatar",#ffffffff#ff00ff15 "AVA", function() avatarToggle.set(not avatarToggle.on) end, avatarToggle)
+	addPopup(pA, "Hide Avatar", "AVA", function() avatarToggle.set(not avatarToggle.on) end, avatarToggle)
 	addPopup(pA, "Skeleton", "SKEL", function() skelToggle.set(not skelToggle.on) end, skelToggle)
 
 	addHeader(pB, "TOMBOL AKSI")
@@ -2214,7 +2164,7 @@ end)
 RunService.RenderStepped:Connect(function()
 	local t = tick()
 	local h = (t * 0.25) % 1
-		for _, t in ipairs({ ..., force3rdToggle, force1stToggle }) do
+	for _, e in ipairs(rgbStrokes) do
 		if e[1].Parent then
 			e[1].Color = Color3.fromHSV((h + e[2]) % 1, 1, 1)
 		end
@@ -2495,7 +2445,7 @@ track(player.CharacterAdded:Connect(function()
 end))
 
 unloadHub = function()
-	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, infJumpToggle, speedToggle, attachToggle, spectateToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
+	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, infJumpToggle, speedToggle, attachToggle, spectateToggle, freecamToggle, force3rdToggle, force1stToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
 		if t and t.on then pcall(t.set, false) end
 	end
 	tintTarget = 1
@@ -2534,4 +2484,4 @@ if not __ok then
 			Duration = 10,
 		})
 	end)
-,,
+end
