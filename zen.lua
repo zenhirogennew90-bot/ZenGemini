@@ -193,20 +193,20 @@ header.Active = true
 header.Parent = main
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.fromOffset(132, 40)
-title.Position = UDim2.fromOffset(12, 0)
+title.Size = UDim2.fromOffset(152, 40)
+title.Position = UDim2.fromOffset(14, 0)
 title.BackgroundTransparency = 1
 title.Text = "ZEFERA HUB v4.2"
 title.Font = Enum.Font.GothamBlack
-title.TextSize = 14
+title.TextSize = 16
 title.TextColor3 = Color3.new(1, 1, 1)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 local titleGrad = Instance.new("UIGradient", title)
 
 local waBtn = Instance.new("TextButton")
-waBtn.Size = UDim2.fromOffset(36, 24)
-waBtn.Position = UDim2.fromOffset(146, 8)
+waBtn.Size = UDim2.fromOffset(46, 24)
+waBtn.Position = UDim2.fromOffset(170, 8)
 waBtn.BackgroundColor3 = Color3.fromRGB(30, 110, 65)
 waBtn.Text = "WA"
 waBtn.Font = Enum.Font.GothamBold
@@ -429,9 +429,7 @@ do
 end
 
 ----------------------------------------------------------------
-
-
-uilder komponen
+-- Builder komponen
 ----------------------------------------------------------------
 local toggleReg, sliderReg = {}, {}
 local order = 0
