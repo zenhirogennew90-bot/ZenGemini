@@ -1113,6 +1113,11 @@ local skelObjs = {}
 skelFolder = Instance.new("Folder")
 skelFolder.Name = "ZeFeraSkeleton"
 skelFolder.Parent = camera
+local avatarSaved = setmetatable({}, { __mode = "k" })
+local skelObjs = {}
+skelFolder = Instance.new("Folder")
+skelFolder.Name = "ZeFeraSkeleton"
+skelFolder.Parent = gui
 
 local R15_BONES = {
 	{ "Head", "UpperTorso" }, { "UpperTorso", "LowerTorso" },
@@ -1199,13 +1204,19 @@ do
 		acc += dt
 		if acc < 0.3 then return end
 		acc = 0
+		if skelFolder and not skelFolder.Parent then
+			skelFolder.Parent = gui
+		end
 		for _, plr in ipairs(Players:GetPlayers()) do
 			if plr ~= player then
 				local char = plr.Character
 				if avatarHideOn and char then hideAvatar(char) end
 				if skelWanted(plr) and char then
 					local sk = skelObjs[plr]
-					if not sk or sk.char ~= char then buildSkeleton(plr) end
+					local broken = not sk or sk.char ~= char or #sk.bones == 0 or (sk.bones[1] and not sk.bones[1].a.Parent)
+					if broken then
+						buildSkeleton(plr)
+					end
 				elseif skelObjs[plr] then
 					clearSkeleton(plr)
 				end
