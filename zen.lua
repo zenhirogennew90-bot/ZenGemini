@@ -193,20 +193,20 @@ header.Active = true
 header.Parent = main
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.fromOffset(152, 40)
-title.Position = UDim2.fromOffset(14, 0)
+title.Size = UDim2.fromOffset(132, 40)
+title.Position = UDim2.fromOffset(12, 0)
 title.BackgroundTransparency = 1
 title.Text = "ZEFERA HUB v4.2"
 title.Font = Enum.Font.GothamBlack
-title.TextSize = 16
+title.TextSize = 14
 title.TextColor3 = Color3.new(1, 1, 1)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 local titleGrad = Instance.new("UIGradient", title)
 
 local waBtn = Instance.new("TextButton")
-waBtn.Size = UDim2.fromOffset(46, 24)
-waBtn.Position = UDim2.fromOffset(170, 8)
+waBtn.Size = UDim2.fromOffset(36, 24)
+waBtn.Position = UDim2.fromOffset(146, 8)
 waBtn.BackgroundColor3 = Color3.fromRGB(30, 110, 65)
 waBtn.Text = "WA"
 waBtn.Font = Enum.Font.GothamBold
@@ -429,7 +429,9 @@ do
 end
 
 ----------------------------------------------------------------
--- Builder komponen
+
+
+uilder komponen
 ----------------------------------------------------------------
 local toggleReg, sliderReg = {}, {}
 local order = 0
@@ -811,31 +813,75 @@ addSlider(gB, gB, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, 
 addSlider(gB, gB, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v end, nil, 500)
 
 do
-	local row = Instance.new("Frame")
-	row.Size = UDim2.new(1, 0, 0, 34)
-	row.BackgroundTransparency = 1
-	row.LayoutOrder = nextOrder()
-	row.Parent = gB
+	local uis = game:GetService("UserInputService")
+	local udBox = Instance.new("Frame")
+	udBox.Name = "MultiUpDown"
+	udBox.Size = UDim2.fromOffset(146, 66)
+	udBox.Position = UDim2.new(0.5, -73, 0.78, 0)
+	udBox.BackgroundColor3 = Color3.fromRGB(16, 18, 26)
+	udBox.BackgroundTransparency = 0.12
+	udBox.Visible = false
+	udBox.Parent = main.Parent
+	corner(udBox, 12)
+	addStroke(udBox, 1.5, 0.2)
 
-	local function mk(text, xScale, xOff, setter)
+	local udLabel = Instance.new("TextLabel")
+	udLabel.Size = UDim2.new(1, 0, 0, 20)
+	udLabel.Position = UDim2.fromOffset(0, 2)
+	udLabel.BackgroundTransparency = 1
+	udLabel.Text = "MULTI FUNGSI UPDOWN"
+	udLabel.Font = Enum.Font.GothamBold
+	udLabel.TextSize = 9.5
+	udLabel.TextColor3 = Color3.fromRGB(160, 195, 255)
+	udLabel.Parent = udBox
+
+	local dragging, dragStart, startPos
+	udBox.InputBegan:Connect(function(i)
+		if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+			dragging, dragStart, startPos = true, i.Position, udBox.Position
+		end
+	end)
+	uis.InputChanged:Connect(function(i)
+		if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+			local d = i.Position - dragStart
+			udBox.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+		end
+	end)
+	uis.InputEnded:Connect(function(i)
+		if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+
+	local function mkFloat(text, xOff, phase, setter)
 		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(0.5, -4, 1, 0)
-		b.Position = UDim2.new(xScale, xOff, 0, 0)
+		b.Size = UDim2.fromOffset(64, 36)
+		b.Position = UDim2.fromOffset(xOff, 24)
 		b.BackgroundColor3 = Color3.fromRGB(26, 26, 36)
 		b.Text = text
 		b.Font = Enum.Font.GothamBold
-		b.TextSize = 13
+		b.TextSize = 12
 		b.TextColor3 = Color3.new(1, 1, 1)
-		b.Parent = row
-		corner(b, 10)
-		addStroke(b, 1.5, xScale + 0.6)
+		b.Parent = udBox
+		corner(b, 9)
+		addStroke(b, 1.5, phase)
 		registerPanel(b)
 		b.MouseButton1Down:Connect(function() setter(true) end)
 		b.MouseButton1Up:Connect(function() setter(false) end)
 		b.MouseLeave:Connect(function() setter(false) end)
 	end
-	mk("UP", 0, 0, function(v) up = v end)
-	mk("DOWN", 0.5, 4, function(v) down = v end)
+	mkFloat("UP", 6, 0.6, function(v) up = v end)
+	mkFloat("DOWN", 76, 1.1, function(v) down = v end)
+
+	RunService.Heartbeat:Connect(function()
+		local active = (flying == true) or (airwalk == true) or (freecamOn == true)
+		if udBox.Visible ~= active then
+			udBox.Visible = active
+			if not active then
+				up, down = false, false
+			end
+		end
+	end)
 end
 
 ----------------------------------------------------------------
