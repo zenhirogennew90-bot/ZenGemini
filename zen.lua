@@ -58,6 +58,7 @@ local hbRgb, tintOn, tintStrength = false, true, 45
 local tpDepth = 8
 local attachOn, attachToggle, tpTarget = false, nil, nil
 local spectateOn, spectateToggle = false, nil
+local freecamOn, freecamToggle, freecamSpeed = false, nil, 50
 local targets, targetEspOn = {}, false
 local avatarHideOn, skelOn, skelOnlyTarget = false, false, false
 local clickOn, clickVol = true, 0.6
@@ -927,7 +928,9 @@ spectateToggle = addToggle(tA, "Spectate Target", function(on)
 		toast("Mengintip " .. tpTarget.DisplayName)
 	else
 		local _, _, hum = getChar()
-		if hum then camera.CameraSubject = hum end
+		local _, _, hum = getChar()
+	if hum then camera.CameraSubject = hum end
+	camera.CameraType = Enum.CameraType.Custom
 	end
 end)
 
@@ -1451,6 +1454,106 @@ do
 	addToggle(rB, "Skeleton Hanya Target", function(on) skelOnlyTarget = on end)
 	addNote(rB, "ESP Target menandai target pilihan (emas). Aktifkan Skeleton Hanya Target agar rangka hanya muncul pada target.")
 	refreshTargets()
+end
+
+addHeader(vA, "FREECAM")
+do
+	local fcPos = Vector3.zero
+	local fcPitch, fcYaw = 0, 0
+	local oldCamType, oldCamSubj, oldWalkSpeed = nil, nil, nil
+	local fcTouchId, fcLastPos = nil, nil
+
+	local function stopFreecam()
+		freecamOn = false
+		fcTouchId, fcLastPos = nil, nil
+		local _, _, hum = getChar()
+		if hum then
+			if oldWalkSpeed then hum.WalkSpeed = oldWalkSpeed end
+			camera.CameraSubject = hum
+		end
+		camera.CameraType = oldCamType or Enum.CameraType.Custom
+		oldCamType, oldCamSubj, oldWalkSpeed = nil, nil, nil
+		if updateUpDown then updateUpDown() end
+	end
+
+	freecamToggle = addToggle(vA, "Freecam Anti-Bug", function(on)
+		if on then
+			if spectateOn and spectateToggle then spectateToggle.set(false) end
+			freecamOn = true
+			oldCamType = camera.CameraType
+			oldCamSubj = camera.CameraSubject
+			local _, _, hum = getChar()
+			if hum then
+				oldWalkSpeed = hum.WalkSpeed
+				hum.WalkSpeed = 0
+			end
+			local cf = camera.CFrame
+			fcPos = cf.Position
+			local rx, ry = cf:ToEulerAnglesYXZ()
+			fcPitch, fcYaw = rx, ry
+			camera.CameraType = Enum.CameraType.Scriptable
+			if updateUpDown then updateUpDown() end
+		else
+			stopFreecam()
+		end
+	end)
+
+	addSlider(vA, vA, "Speed Freecam", 10, 200, freecamSpeed, function(v) freecamSpeed = v end, "", 500)
+
+	local UIS = game:GetService("UserInputService")
+	track(UIS.TouchStarted:Connect(function(input, gp)
+		if not freecamOn or gp or fcTouchId then return end
+		if input.Position.X > camera.ViewportSize.X * 0.45 then
+			fcTouchId = input
+			fcLastPos = input.Position
+		end
+	end))
+
+	track(UIS.TouchMoved:Connect(function(input)
+		if not freecamOn or input ~= fcTouchId or not fcLastPos then return end
+		local delta = input.Position - fcLastPos
+		fcLastPos = input.Position
+		fcYaw = fcYaw - delta.X * 0.004
+		fcPitch = math.clamp(fcPitch - delta.Y * 0.004, -1.5, 1.5)
+	end))
+
+	track(UIS.TouchEnded:Connect(function(input)
+		if input == fcTouchId then
+			fcTouchId, fcLastPos = nil, nil
+		end
+	end))
+
+	track(RunService.RenderStepped:Connect(function(dt)
+		if not freecamOn then return end
+		camera.CameraType = Enum.CameraType.Scriptable
+		local _, _, hum = getChar()
+		local md = Vector3.zero
+		if hum then
+			hum.WalkSpeed = 0
+			md = hum.MoveDirection
+			if md.Magnitude <= 0.15 then md = Vector3.zero end
+		end
+
+		local rot = CFrame.fromEulerAnglesYXZ(fcPitch, fcYaw, 0)
+		local moveVec = Vector3.zero
+		if md.Magnitude > 0.01 then
+			local camFlat = camera.CFrame
+			local fl = Vector3.new(camFlat.LookVector.X, 0, camFlat.LookVector.Z)
+			local fr = Vector3.new(camFlat.RightVector.X, 0, camFlat.RightVector.Z)
+			fl = fl.Magnitude > 0 and fl.Unit or Vector3.zero
+			fr = fr.Magnitude > 0 and fr.Unit or Vector3.zero
+			local fwd = md:Dot(fl)
+			local side = md:Dot(fr)
+			moveVec = (rot.LookVector * fwd) + (rot.RightVector * side)
+		end
+		if up then moveVec += Vector3.yAxis end
+		if down then moveVec -= Vector3.yAxis end
+
+		if moveVec.Magnitude > 0.01 then
+			fcPos += moveVec.Unit * freecamSpeed * dt
+		end
+		camera.CFrame = CFrame.new(fcPos) * rot
+	end))
 end
 
 -- Hitbox Bulat (Tab VISUAL)
