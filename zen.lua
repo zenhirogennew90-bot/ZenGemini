@@ -49,7 +49,7 @@ end
 ----------------------------------------------------------------
 local flySpeed, walkSpeed = 60, 50
 local up, down = false, false
-local flying, noclip, airwalk, speedUp = false, false, false, false
+local flying, noclip, airwalk, speedUp, unliJump = false, false, false, false, false
 local flyLockOn, flyLockCF = false, nil
 local espOn = false
 local hbOn, hbHide, hbSkipTeam = false, false, false
@@ -359,7 +359,7 @@ end
 local gA, gB = addTab("GERAK")
 local tA, tB = addTab("TELEPORT")
 local vA, vB = addTab("VISUAL")
-local rA, rB = addTab("TARGET")
+local rA, rB = addTab("ESP TARGET")
 local oA, oB = addTab("OPTIMASI")
 local pA, pB = addTab("POPUP")
 local sA, sB = addTab("PENGATURAN")
@@ -740,6 +740,15 @@ comboToggle = addToggle(gA, "NoClip+Airwalk", function(on)
 	if noclipToggle.on ~= on then noclipToggle.set(on) end
 	if airToggle.on ~= on then airToggle.set(on) end
 end)
+
+local infJumpToggle = addToggle(gA, "Unli Jump", function(on) unliJump = on end)
+track(game:GetService("UserInputService").JumpRequest:Connect(function()
+	if not unliJump then return end
+	local _, _, hum = getChar()
+	if hum then
+		hum:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end))
 
 addHeader(gB, "MOVEMENT+")
 
@@ -1755,6 +1764,7 @@ do
 	addPopup(pA, "Noclip", "NOCLIP", function() noclipToggle.set(not noclipToggle.on) end, noclipToggle)
 	addPopup(pA, "Airwalk", "AIR", function() airToggle.set(not airToggle.on) end, airToggle)
 	addPopup(pA, "NoClip+Airwalk", "NC+A", function() comboToggle.set(not comboToggle.on) end, comboToggle)
+	addPopup(pA, "Unli Jump", "JUMP", function() infJumpToggle.set(not infJumpToggle.on) end, infJumpToggle)
 	addPopup(pA, "Speed Up", "SPEED", function() speedToggle.set(not speedToggle.on) end, speedToggle)
 	addPopup(pA, "Attach Tanah", "ATTACH", function() attachToggle.set(not attachToggle.on) end, attachToggle)
 	addPopup(pA, "ESP", "ESP", function() espToggle.set(not espToggle.on) end, espToggle)
@@ -2155,7 +2165,7 @@ track(player.CharacterAdded:Connect(function()
 end))
 
 unloadHub = function()
-	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, speedToggle, attachToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
+	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, infJumpToggle, speedToggle, attachToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
 		if t and t.on then pcall(t.set, false) end
 	end
 	tintTarget = 1
