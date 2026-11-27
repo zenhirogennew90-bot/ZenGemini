@@ -57,6 +57,7 @@ local hbSize, hbTrans = 12, 0.7
 local hbRgb, tintOn, tintStrength = false, true, 45
 local tpDepth = 8
 local attachOn, attachToggle, tpTarget = false, nil, nil
+local spectateOn, spectateToggle = false, nil
 local targets, targetEspOn = {}, false
 local avatarHideOn, skelOn, skelOnlyTarget = false, false, false
 local clickOn, clickVol = true, 0.6
@@ -191,16 +192,37 @@ header.Active = true
 header.Parent = main
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -165, 1, 0)
+title.Size = UDim2.fromOffset(152, 40)
 title.Position = UDim2.fromOffset(14, 0)
 title.BackgroundTransparency = 1
-title.Text = "ZEFERA HUB"
+title.Text = "ZEFERA HUB v4.2"
 title.Font = Enum.Font.GothamBlack
-title.TextSize = 18
+title.TextSize = 16
 title.TextColor3 = Color3.new(1, 1, 1)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 local titleGrad = Instance.new("UIGradient", title)
+
+local waBtn = Instance.new("TextButton")
+waBtn.Size = UDim2.fromOffset(46, 24)
+waBtn.Position = UDim2.fromOffset(170, 8)
+waBtn.BackgroundColor3 = Color3.fromRGB(30, 110, 65)
+waBtn.Text = "WA"
+waBtn.Font = Enum.Font.GothamBold
+waBtn.TextSize = 11
+waBtn.TextColor3 = Color3.new(1, 1, 1)
+waBtn.Parent = header
+corner(waBtn, 7)
+waBtn.MouseButton1Click:Connect(function()
+	local num = "085769823868"
+	local copyFn = setclipboard or toclipboard
+	if copyFn then
+		pcall(copyFn, num)
+		toast("WA disalin: " .. num)
+	else
+		toast("WA: " .. num)
+	end
+end)
 
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.fromOffset(28, 28)
@@ -893,7 +915,37 @@ attachToggle = addToggle(tA, "Attach Bawah Tanah", function(on)
 	end
 end)
 addSlider(tA, tA, "Kedalaman Tanah", 1, 100, tpDepth, function(v) tpDepth = v end, " st", 500)
-addNote(tA, "Attach Bawah Tanah mengunci posisimu diam tepat di bawah 1 player pilihan di samping (atau pemain acak jika belum dipilih).")
+
+spectateToggle = addToggle(tA, "Spectate Target", function(on)
+	spectateOn = on
+	if on then
+		if not (tpTarget and tpTarget.Parent and tpTarget.Character) then
+			toast("Pilih 1 target dulu di daftar!")
+			spectateToggle.set(false)
+			return
+		end
+		toast("Mengintip " .. tpTarget.DisplayName)
+	else
+		local _, _, hum = getChar()
+		if hum then camera.CameraSubject = hum end
+	end
+end)
+
+RunService.Heartbeat:Connect(function()
+	if not spectateOn then return end
+	if not (tpTarget and tpTarget.Parent) then
+		spectateToggle.set(false)
+		toast("Spectate berhenti: target keluar")
+		return
+	end
+	local char = tpTarget.Character
+	local subj = char and (char:FindFirstChildOfClass("Humanoid") or char:FindFirstChild("HumanoidRootPart"))
+	if subj and camera.CameraSubject ~= subj then
+		camera.CameraSubject = subj
+	end
+end)
+
+addNote(tA, "Attach Bawah Tanah mengunci posisimu di bawah target. Aktifkan Spectate Target untuk memantau layar dari sudut pandang target.")
 
 addHeader(tB, "TP MANUAL TARGET")
 local tpTargetBtn = addButton(tB, "TP ke Target Pilihan", function()
@@ -1767,6 +1819,7 @@ do
 	addPopup(pA, "Unli Jump", "JUMP", function() infJumpToggle.set(not infJumpToggle.on) end, infJumpToggle)
 	addPopup(pA, "Speed Up", "SPEED", function() speedToggle.set(not speedToggle.on) end, speedToggle)
 	addPopup(pA, "Attach Tanah", "ATTACH", function() attachToggle.set(not attachToggle.on) end, attachToggle)
+	addPopup(pA, "Spectate", "SPEC", function() spectateToggle.set(not spectateToggle.on) end, spectateToggle)
 	addPopup(pA, "ESP", "ESP", function() espToggle.set(not espToggle.on) end, espToggle)
 	addPopup(pA, "ESP Target", "TARGET", function() targetEspToggle.set(not targetEspToggle.on) end, targetEspToggle)
 	addPopup(pA, "Hitbox", "HIT", function() hbToggle.set(not hbToggle.on) end, hbToggle)
@@ -2165,7 +2218,7 @@ track(player.CharacterAdded:Connect(function()
 end))
 
 unloadHub = function()
-	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, infJumpToggle, speedToggle, attachToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
+	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, infJumpToggle, speedToggle, attachToggle, spectateToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
 		if t and t.on then pcall(t.set, false) end
 	end
 	tintTarget = 1
