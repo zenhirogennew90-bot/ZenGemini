@@ -815,7 +815,7 @@ end)
 
 addSlider(gB, gB, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, nil, 1000)
 addSlider(gB, gB, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v end, nil, 500)
-#ff5c98ff
+
 do
 	local uis = game:GetService("UserInputService")
 addSlider(gB, gB, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, nil, 1000)
