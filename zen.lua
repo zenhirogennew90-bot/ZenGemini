@@ -59,6 +59,8 @@ local tpDepth = 8
 local attachOn, attachToggle, tpTarget = false, nil, nil
 local spectateOn, spectateToggle = false, nil
 local freecamOn, freecamToggle, freecamSpeed = false, nil, 50
+local force3rdOn, force3rdToggle, maxZoomDist = false, nil, 400
+local force1stOn, force1stToggle = false, nil
 local targets, targetEspOn = {}, false
 local avatarHideOn, skelOn, skelOnlyTarget = false, false, false
 local clickOn, clickVol = true, 0.6
@@ -193,20 +195,20 @@ header.Active = true
 header.Parent = main
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.fromOffset(152, 40)
-title.Position = UDim2.fromOffset(14, 0)
+title.Size = UDim2.fromOffset(132, 40)
+title.Position = UDim2.fromOffset(12, 0)
 title.BackgroundTransparency = 1
 title.Text = "ZEFERA HUB v4.2"
 title.Font = Enum.Font.GothamBlack
-title.TextSize = 16
+title.TextSize = 14
 title.TextColor3 = Color3.new(1, 1, 1)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 local titleGrad = Instance.new("UIGradient", title)
 
 local waBtn = Instance.new("TextButton")
-waBtn.Size = UDim2.fromOffset(46, 24)
-waBtn.Position = UDim2.fromOffset(170, 8)
+waBtn.Size = UDim2.fromOffset(36, 24)
+waBtn.Position = UDim2.fromOffset(146, 8)
 waBtn.BackgroundColor3 = Color3.fromRGB(30, 110, 65)
 waBtn.Text = "WA"
 waBtn.Font = Enum.Font.GothamBold
@@ -429,7 +431,9 @@ do
 end
 
 ----------------------------------------------------------------
--- Builder komponen
+
+
+uilder komponen
 ----------------------------------------------------------------
 local toggleReg, sliderReg = {}, {}
 local order = 0
@@ -764,6 +768,8 @@ comboToggle = addToggle(gA, "NoClip+Airwalk", function(on)
 	if airToggle.on ~= on then airToggle.set(on) end
 end)
 
+
+
 local infJumpToggle = addToggle(gA, "Unli Jump", function(on) unliJump = on end)
 track(game:GetService("UserInputService").JumpRequest:Connect(function()
 	if not unliJump then return end
@@ -809,7 +815,7 @@ end)
 
 addSlider(gB, gB, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, nil, 1000)
 addSlider(gB, gB, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v end, nil, 500)
-
+#ff5c98ff
 do
 	local uis = game:GetService("UserInputService")
 	local udBox = Instance.new("Frame")
@@ -1500,8 +1506,121 @@ do
 	refreshTargets()
 end
 
-addHeader(vA, "FREECAM")
+addHeader(vA, "KAMERA")
 do
+	local origMinZoom, origMaxZoom = nil, nil
+
+	local function saveZoomOnce()
+		if origMinZoom == nil then origMinZoom = player.CameraMinZoomDistance end
+		if origMaxZoom == nil then origMaxZoom = player.CameraMaxZoomDistance end
+	end
+
+	local function restoreZoom()
+		if origMinZoom ~= nil then player.CameraMinZoomDistance = origMinZoom end
+		if origMaxZoom ~= nil then player.CameraMaxZoomDistance = origMaxZoom end
+		origMinZoom, origMaxZoom = nil, nil
+	end
+
+	force3rdToggle = addToggle(vA, "Paksa Orang Ketiga", function(on)
+		force3rdOn = on
+		if on then
+			if force1stOn and force1stToggle then force1stToggle.set(false) end
+			saveZoomOnce()
+			player.CameraMinZoomDistance = 8
+			player.CameraMaxZoomDistance = maxZoomDist
+		else
+			if not force1stOn then restoreZoom() end
+		end
+	end)
+
+	force1stToggle = addToggle(vA, "Paksa Orang Pertama", function(on)
+		force1stOn = on
+		if on then
+			if force3rdOn and force3rdToggle then force3rdToggle.set(false) end
+			saveZoomOnce()
+			player.CameraMinZoomDistance = 0.5
+			player.CameraMaxZoomDistance = 0.5
+		else
+			if not force3rdOn then restoreZoom() end
+		end
+	end)
+
+	addSlider(vA, vA, "Jarak Zoom 3rd", 30, 1000, maxZoomDist, function(v)
+		maxZoomDist = v
+		if force3rdOn then
+			player.CameraMaxZoomDistance = maxZoomDist
+		end
+	end, "", 500)
+
+	track(RunService.Heartbeat:Connect(function()
+		if force3rdOn then
+			player.CameraMinZoomDistance = math.max(player.CameraMinZoomDistance, 5)
+			player.CameraMaxZoomDistance = maxZoomDist
+		elseif force1stOn then
+			player.CameraMinZoomDistance = 0.5
+			player.CameraMaxZoomDistance = 0.5
+		end
+	end))
+end
+
+addHeader(vA, "KAMERA")
+do
+	local origMinZoom, origMaxZoom = nil, nil
+
+	local function saveZoomOnce()
+		if origMinZoom == nil then origMinZoom = player.CameraMinZoomDistance end
+		if origMaxZoom == nil then origMaxZoom = player.CameraMaxZoomDistance end
+	end
+
+	local function restoreZoom()
+		if origMinZoom ~= nil then player.CameraMinZoomDistance = origMinZoom end
+		if origMaxZoom ~= nil then player.CameraMaxZoomDistance = origMaxZoom end
+		origMinZoom, origMaxZoom = nil, nil
+	end
+
+	force3rdToggle = addToggle(vA, "Paksa Orang Ketiga", function(on)
+		force3rdOn = on
+		if on then
+			if force1stOn and force1stToggle then force1stToggle.set(false) end
+			saveZoomOnce()
+			player.CameraMinZoomDistance = 8
+			player.CameraMaxZoomDistance = maxZoomDist
+		else
+			if not force1stOn then restoreZoom() end
+		end
+	end)
+
+	force1stToggle = addToggle(vA, "Paksa Orang Pertama", function(on)
+		force1stOn = on
+		if on then
+			if force3rdOn and force3rdToggle then force3rdToggle.set(false) end
+			saveZoomOnce()
+			player.CameraMinZoomDistance = 0.5
+			player.CameraMaxZoomDistance = 0.5
+		else
+			if not force3rdOn then restoreZoom() end
+		end
+	end)
+
+	addSlider(vA, vA, "Jarak Zoom 3rd", 30, 1000, maxZoomDist, function(v)
+		maxZoomDist = v
+		if force3rdOn then
+			player.CameraMaxZoomDistance = maxZoomDist
+		end
+	end, "", 500)
+
+	track(RunService.Heartbeat:Connect(function()
+		if force3rdOn then
+			player.CameraMinZoomDistance = math.max(player.CameraMinZoomDistance, 5)
+			player.CameraMaxZoomDistance = maxZoomDist
+		elseif force1stOn then
+			player.CameraMinZoomDistance = 0.5
+			player.CameraMaxZoomDistance = 0.5
+		end
+	end))
+end
+
+addHeader(vA, "FREECAM")do
 	local fcPos = Vector3.zero
 	local fcPitch, fcYaw = 0, 0
 	local oldCamType, oldCamSubj, oldWalkSpeed = nil, nil, nil
@@ -1967,10 +2086,12 @@ do
 	addPopup(pA, "Speed Up", "SPEED", function() speedToggle.set(not speedToggle.on) end, speedToggle)
 	addPopup(pA, "Attach Tanah", "ATTACH", function() attachToggle.set(not attachToggle.on) end, attachToggle)
 	addPopup(pA, "Spectate", "SPEC", function() spectateToggle.set(not spectateToggle.on) end, spectateToggle)
+	addPopup(pA, "3rd Person", "3RD", function() force3rdToggle.set(not force3rdToggle.on) end, force3rdToggle)
+	addPopup(pA, "1st Person", "1ST", function() force1stToggle.set(not force1stToggle.on) end, force1stToggle)
 	addPopup(pA, "ESP", "ESP", function() espToggle.set(not espToggle.on) end, espToggle)
 	addPopup(pA, "ESP Target", "TARGET", function() targetEspToggle.set(not targetEspToggle.on) end, targetEspToggle)
 	addPopup(pA, "Hitbox", "HIT", function() hbToggle.set(not hbToggle.on) end, hbToggle)
-	addPopup(pA, "Hide Avatar", "AVA", function() avatarToggle.set(not avatarToggle.on) end, avatarToggle)
+	addPopup(pA, "Hide Avatar",#ffffffff#ff00ff15 "AVA", function() avatarToggle.set(not avatarToggle.on) end, avatarToggle)
 	addPopup(pA, "Skeleton", "SKEL", function() skelToggle.set(not skelToggle.on) end, skelToggle)
 
 	addHeader(pB, "TOMBOL AKSI")
@@ -2093,7 +2214,7 @@ end)
 RunService.RenderStepped:Connect(function()
 	local t = tick()
 	local h = (t * 0.25) % 1
-	for _, e in ipairs(rgbStrokes) do
+		for _, t in ipairs({ ..., force3rdToggle, force1stToggle }) do
 		if e[1].Parent then
 			e[1].Color = Color3.fromHSV((h + e[2]) % 1, 1, 1)
 		end
@@ -2413,4 +2534,4 @@ if not __ok then
 			Duration = 10,
 		})
 	end)
-end
+,,
