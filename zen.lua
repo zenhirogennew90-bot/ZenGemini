@@ -59,8 +59,7 @@ local tpDepth = 8
 local attachOn, attachToggle, tpTarget = false, nil, nil
 local spectateOn, spectateToggle = false, nil
 local freecamOn, freecamToggle, freecamSpeed = false, nil, 50
-local force3rdOn, force3rdToggle, maxZoomDist = false, nil, 400
-local force1stOn, force1stToggle = false, nil
+local ext = { f3 = false, f1 = false, zoom = 400 }
 local targets, targetEspOn = {}, false
 local avatarHideOn, skelOn, skelOnlyTarget = false, false, false
 local clickOn, clickVol = true, 0.6
@@ -1226,11 +1225,6 @@ local avatarSaved = setmetatable({}, { __mode = "k" })
 local skelObjs = {}
 skelFolder = Instance.new("Folder")
 skelFolder.Name = "ZeFeraSkeleton"
-skelFolder.Parent = camera
-local avatarSaved = setmetatable({}, { __mode = "k" })
-local skelObjs = {}
-skelFolder = Instance.new("Folder")
-skelFolder.Name = "ZeFeraSkeleton"
 skelFolder.Parent = gui
 
 local R15_BONES = {
@@ -1521,42 +1515,42 @@ do
 		origMinZoom, origMaxZoom = nil, nil
 	end
 
-	force3rdToggle = addToggle(vA, "Paksa Orang Ketiga", function(on)
-		force3rdOn = on
+	ext.f3T = addToggle(vA, "Paksa Orang Ketiga", function(on)
+		ext.f3 = on
 		if on then
-			if force1stOn and force1stToggle then force1stToggle.set(false) end
+			if ext.f1 and ext.f1T then ext.f1T.set(false) end
 			saveZoomOnce()
 			player.CameraMinZoomDistance = 8
-			player.CameraMaxZoomDistance = maxZoomDist
+			player.CameraMaxZoomDistance = ext.zoom
 		else
-			if not force1stOn then restoreZoom() end
+			if not ext.f1 then restoreZoom() end
 		end
 	end)
 
-	force1stToggle = addToggle(vA, "Paksa Orang Pertama", function(on)
-		force1stOn = on
+	ext.f1T = addToggle(vA, "Paksa Orang Pertama", function(on)
+		ext.f1 = on
 		if on then
-			if force3rdOn and force3rdToggle then force3rdToggle.set(false) end
+			if ext.f3 and ext.f3T then ext.f3T.set(false) end
 			saveZoomOnce()
 			player.CameraMinZoomDistance = 0.5
 			player.CameraMaxZoomDistance = 0.5
 		else
-			if not force3rdOn then restoreZoom() end
+			if not ext.f3 then restoreZoom() end
 		end
 	end)
 
-	addSlider(vA, vA, "Jarak Zoom 3rd", 30, 1000, maxZoomDist, function(v)
-		maxZoomDist = v
-		if force3rdOn then
-			player.CameraMaxZoomDistance = maxZoomDist
+	addSlider(vA, vA, "Jarak Zoom 3rd", 30, 1000, ext.zoom, function(v)
+		ext.zoom = v
+		if ext.f3 then
+			player.CameraMaxZoomDistance = ext.zoom
 		end
 	end, "", 500)
 
 	track(RunService.Heartbeat:Connect(function()
-		if force3rdOn then
+		if ext.f3 then
 			player.CameraMinZoomDistance = math.max(player.CameraMinZoomDistance, 5)
-			player.CameraMaxZoomDistance = maxZoomDist
-		elseif force1stOn then
+			player.CameraMaxZoomDistance = ext.zoom
+		elseif ext.f1 then
 			player.CameraMinZoomDistance = 0.5
 			player.CameraMaxZoomDistance = 0.5
 		end
@@ -2031,8 +2025,8 @@ do
 	addPopup(pA, "Attach Tanah", "ATTACH", function() attachToggle.set(not attachToggle.on) end, attachToggle)
 	addPopup(pA, "Spectate", "SPEC", function() spectateToggle.set(not spectateToggle.on) end, spectateToggle)
 	addPopup(pA, "Freecam", "FREE", function() freecamToggle.set(not freecamToggle.on) end, freecamToggle)
-	addPopup(pA, "3rd Person", "3RD", function() force3rdToggle.set(not force3rdToggle.on) end, force3rdToggle)
-	addPopup(pA, "1st Person", "1ST", function() force1stToggle.set(not force1stToggle.on) end, force1stToggle)
+	addPopup(pA, "3rd Person", "3RD", function() ext.f3T.set(not ext.f3T.on) end, ext.f3T)
+	addPopup(pA, "1st Person", "1ST", function() ext.f1T.set(not ext.f1T.on) end, ext.f1T)
 	addPopup(pA, "ESP", "ESP", function() espToggle.set(not espToggle.on) end, espToggle)
 	addPopup(pA, "ESP Target", "TARGET", function() targetEspToggle.set(not targetEspToggle.on) end, targetEspToggle)
 	addPopup(pA, "Hitbox", "HIT", function() hbToggle.set(not hbToggle.on) end, hbToggle)
@@ -2440,7 +2434,7 @@ track(player.CharacterAdded:Connect(function()
 end))
 
 unloadHub = function()
-	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, infJumpToggle, speedToggle, attachToggle, spectateToggle, freecamToggle, force3rdToggle, force1stToggle, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
+	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, infJumpToggle, speedToggle, attachToggle, spectateToggle, freecamToggle, ext.f3T, ext.f1T, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
 		if t and t.on then pcall(t.set, false) end
 	end
 	tintTarget = 1
