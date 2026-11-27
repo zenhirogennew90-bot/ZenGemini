@@ -818,12 +818,7 @@ addSlider(gB, gB, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v en
 
 do
 	local uis = game:GetService("UserInputService")
-addSlider(gB, gB, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, nil, 1000)
-addSlider(gB, gB, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v end, nil, 500)
-
-do
-	local uis = game:GetService("UserInputService")
-    	local udBox = Instance.new("Frame")
+	local udBox = Instance.new("Frame")
 	udBox.Name = "MultiUpDown"
 	udBox.Size = UDim2.fromOffset(146, 66)
 	udBox.Position = UDim2.new(0.5, -73, 0.78, 0)
@@ -2483,5 +2478,5 @@ if not __ok then
 			Text = tostring(__err):sub(1, 150),
 			Duration = 10,
 		})
-	end)
-end
+     end)
+	end
