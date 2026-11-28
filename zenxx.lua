@@ -2145,164 +2145,6 @@ addSlider(sA, sA, "Lebar Menu", 360, maxW, math.min(MENU_W, maxW), function(v)
 	end
 end, " px")
 
-
-
-do
-	local mapEditMode = false
-	local origPos = {}
-	local hookedBtn = {}
-	local disabledLayouts = {}
-
-	local function isMapButton(btn)
-		if not btn:IsA("GuiButton") then return false end
-		if btn:IsDescendantOf(gui) then return false end
-		local sg = btn:FindFirstAncestorWhichIsA("ScreenGui")
-		if not sg or not sg.Enabled then return false end
-		if sg.Name == "TouchGui" and btn.Name ~= "JumpButton" then return false end
-		return btn.Visible
-	end
-
-	local function setHighlight(btn, state)
-		local old = btn:FindFirstChild("ZF_MapEditStroke")
-		if state then
-			if not old then
-				local st = Instance.new("UIStroke")
-				st.Name = "ZF_MapEditStroke"
-				st.Color = Color3.fromRGB(0, 220, 255)
-				st.Thickness = 2
-				st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-				st.Parent = btn
-			end
-		else
-			if old then old:Destroy() end
-		end
-	end
-
-	local function hookMapButton(btn)
-		if hookedBtn[btn] then return end
-		hookedBtn[btn] = true
-
-		local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
-
-		btn.InputBegan:Connect(function(input)
-			if not mapEditMode then return end
-			if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-				dragging = true
-				dragInput = input
-				dragStart = input.Position
-				if not origPos[btn] then
-					origPos[btn] = btn.Position
-				end
-				startPos = btn.Position
-
-				if btn.Parent then
-					for _, child in ipairs(btn.Parent:GetChildren()) do
-						if (child:IsA("UIListLayout") or child:IsA("UIGridLayout")) and not disabledLayouts[child] then
-							disabledLayouts[child] = child.Parent
-							child.Parent = nil
-						end
-					end
-				end
-			end
-		end)
-
-		UIS.InputChanged:Connect(function(input)
-			if not dragging or not mapEditMode then return end
-			if input == dragInput or input.UserInputType == Enum.UserInputType.MouseMovement then
-				local delta = input.Position - dragStart
-				btn.Position = UDim2.new(
-					startPos.X.Scale, startPos.X.Offset + delta.X,
-					startPos.Y.Scale, startPos.Y.Offset + delta.Y
-				)
-			end
-		end)
-
-		UIS.InputEnded:Connect(function(input)
-			if input == dragInput then
-				dragging = false
-				dragInput = nil
-			end
-		end)
-	end
-
-do
-	local mapEditMode = false
-	local origPos = {}
-	local hookedBtn = {}
-	local disabledLayouts = {}
-
-	local function isMapButton(btn)
-		if not btn:IsA("GuiButton") then return false end
-		if btn:IsDescendantOf(gui) then return false end
-		local sg = btn:FindFirstAncestorWhichIsA("ScreenGui")
-		if not sg or not sg.Enabled then return false end
-		if sg.Name == "TouchGui" and btn.Name ~= "JumpButton" then return false end
-		return btn.Visible
-	end
-
-	local function setHighlight(btn, state)
-		local old = btn:FindFirstChild("ZF_MapEditStroke")
-		if state then
-			if not old then
-				local st = Instance.new("UIStroke")
-				st.Name = "ZF_MapEditStroke"
-				st.Color = Color3.fromRGB(0, 220, 255)
-				st.Thickness = 2
-				st.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-				st.Parent = btn
-			end
-		else
-			if old then old:Destroy() end
-		end
-	end
-
-	local function hookMapButton(btn)
-		if hookedBtn[btn] then return end
-		hookedBtn[btn] = true
-
-		local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
-
-		btn.InputBegan:Connect(function(input)
-			if not mapEditMode then return end
-			if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-				dragging = true
-				dragInput = input
-				dragStart = input.Position
-				if not origPos[btn] then
-					origPos[btn] = btn.Position
-				end
-				startPos = btn.Position
-
-				if btn.Parent then
-					for _, child in ipairs(btn.Parent:GetChildren()) do
-						if (child:IsA("UIListLayout") or child:IsA("UIGridLayout")) and not disabledLayouts[child] then
-							disabledLayouts[child] = child.Parent
-							child.Parent = nil
-						end
-					end
-				end
-			end
-		end)
-
-		UIS.InputChanged:Connect(function(input)
-			if not dragging or not mapEditMode then return end
-			if input == dragInput or input.UserInputType == Enum.UserInputType.MouseMovement then
-				local delta = input.Position - dragStart
-				btn.Position = UDim2.new(
-					startPos.X.Scale, startPos.X.Offset + delta.X,
-					startPos.Y.Scale, startPos.Y.Offset + delta.Y
-				)
-			end
-		end)
-
-		UIS.InputEnded:Connect(function(input)
-			if input == dragInput then
-				dragging = false
-				dragInput = nil
-			end
-		end)
-	end
-
 do
 	local mapEditMode = false
 	local selectedBtn = nil
@@ -2454,7 +2296,7 @@ do
 		end
 		table.clear(origPos)
 
-		for btn, sc in pairs(scaleObjs) do
+		for _, sc in pairs(scaleObjs) do
 			if sc then
 				pcall(function() sc:Destroy() end)
 			end
@@ -2472,31 +2314,6 @@ do
 		toast("Layout, ukuran & tombol map direset")
 	end)
 end
- then
-			toast("Mode Edit Aktif: Geser tombol map di layar")
-		else
-			toast("Posisi tombol map dikunci")
-		end
-	end)
-
-	addButton(sA, "Reset Layout Map", function()
-		for layout, parent in pairs(disabledLayouts) do
-			if layout and parent then
-				pcall(function() layout.Parent = parent end)
-			end
-		end
-		table.clear(disabledLayouts)
-
-		for btn, pos in pairs(origPos) do
-			if btn and btn.Parent then
-				pcall(function() btn.Position = pos end)
-			end
-		end
-		table.clear(origPos)
-		toast("Layout tombol map direset ke posisi awal")
-	end)
-end
-
 
 addHeader(sB, "AUDIO")
 local soundToggle = addToggle(sB, "Suara Klik Lucu", function(on) clickOn = on end)
