@@ -59,7 +59,8 @@ local tpDepth = 8
 local attachOn, attachToggle, tpTarget = false, nil, nil
 local spectateOn, spectateToggle = false, nil
 local freecamOn, freecamToggle, freecamSpeed = false, nil, 50
-local ext = { f3 = false, f1 = false, zoom = 400 }
+local ext = { f3 = false, f1 = false, zoom = 400, nc2 = false, nc2Saved = setmetatable({}, { __mode = "k" }) }
+local tpRandom, tpBtn, darkToggle
 local targets, targetEspOn = {}, false
 local avatarHideOn, skelOn, skelOnlyTarget = false, false, false
 local clickOn, clickVol = true, 0.6
@@ -711,8 +712,6 @@ flyToggle = addToggle(gA, "Fly", function(on)
 end)
 
 addToggle(gA, "Fly Bebas Lihat", function(on) flyLockOn = on end)
-local noclipToggle = addToggle(gA, "Noclip", function(on) noclip = on end)local freecamOn, freecamToggle, freecamSpeed = false, nil, 50
-local ext = { f3 = false, f1 = false, zoom = 400, nc2 = false, nc2Saved = setmetatable({}, { __mode = "k" }) }
 local noclipToggle = addToggle(gA, "Noclip", function(on) noclip = on end)
 
 local function restoreNc2()
@@ -960,6 +959,7 @@ end
 ----------------------------------------------------------------
 -- TAB 2: TELEPORT & ATTACH BAWAH TANAH
 ----------------------------------------------------------------
+do
 local function livePlayers(list)
 	local out = {}
 	for _, plr in ipairs(list) do
@@ -973,7 +973,7 @@ local function livePlayers(list)
 	return out
 end
 
-local function tpRandom()
+tpRandom = function()
 	local _, root = getChar()
 	if not root then return end
 	local pool = livePlayers(Players:GetPlayers())
@@ -1140,7 +1140,7 @@ end)
 renderTpTargets()
 
 local tpLocked = false
-local tpBtn = Instance.new("TextButton")
+tpBtn = Instance.new("TextButton")
 tpBtn.Name = "TPShortcut"
 tpBtn.Size = UDim2.fromOffset(54, 54)
 tpBtn.Position = UDim2.new(1, -150, 0.5, -27)
@@ -1159,6 +1159,7 @@ addToggle(pB, "Kunci Pop-up", function(on)
 	tpLocked = on
 	toast(on and "Semua pop-up dikunci" or "Pop-up dibuka")
 end)
+end
 
 ----------------------------------------------------------------
 -- TAB 3 & 4: VISUAL (HITBOX) & TARGET (ESP)
@@ -1817,9 +1818,10 @@ end)
 ----------------------------------------------------------------
 -- TAB 5: OPTIMASI
 ----------------------------------------------------------------
+do
 local savedLight
 addHeader(oA, "PENCAHAYAAN")
-local darkToggle = addToggle(oA, "Anti Gelap", function(on)
+darkToggle = addToggle(oA, "Anti Gelap", function(on)
 	if on then
 		savedLight = {
 			Brightness = Lighting.Brightness,
@@ -2012,6 +2014,7 @@ do
 		if on then xApply() else xRevert() end
 	end)
 	addNote(oB, "PERINGATAN: mengubah tampilan map (material jadi polos, rumput terrain off, kualitas terendah). Matikan untuk mengembalikan.")
+end
 end
 
 ----------------------------------------------------------------
