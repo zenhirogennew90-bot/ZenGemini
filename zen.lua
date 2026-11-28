@@ -59,7 +59,7 @@ local tpDepth = 8
 local attachOn, attachToggle, tpTarget = false, nil, nil
 local spectateOn, spectateToggle = false, nil
 local freecamOn, freecamToggle, freecamSpeed = false, nil, 50
-local ext = { f3 = false, f1 = false, zoom = 400, nc2 = false, nc2Saved = setmetatable({}, { __mode = "k" }) }
+local ext = { f3 = false, f1 = false, zoom = 400, nc2 = false, nc2Saved = setmetatable({}, { __mode = "k" }), floatPos = {}, udBox = nil }
 local tpRandom, tpBtn, darkToggle
 local tpLocked = false
 local targets, targetEspOn = {}, false
@@ -868,6 +868,7 @@ do
 	local uis = game:GetService("UserInputService")
 	local udBox = Instance.new("Frame")
 	udBox.Name = "MultiUpDown"
+	ext.udBox = udBox
 	udBox.Size = UDim2.fromOffset(146, 66)
 	udBox.Position = UDim2.new(0.5, -73, 0.78, 0)
 	udBox.BackgroundColor3 = Color3.fromRGB(16, 18, 26)
@@ -2013,21 +2014,25 @@ local floats = {}
 do
 	local floatSlots = {}
 
-	local function makeFloat(label, onClick, obj)
+		local function makeFloat(label, onClick, obj, key)
 		local n = 1
 		while floatSlots[n] do n += 1 end
 		floatSlots[n] = true
 
 		local btn = Instance.new("TextButton")
 		btn.Size = UDim2.fromOffset(50, 50)
-		btn.Position = UDim2.new(1, -66 - math.floor((n - 1) / 6) * 58, 0.1, ((n - 1) % 6) * 56)
+		local saved = key and ext.floatPos[key]
+		if type(saved) == "table" and #saved == 4 then
+			btn.Position = UDim2.new(saved[1], saved[2], saved[3], saved[4])
+		else
+			btn.Position = UDim2.new(1, -66 - math.floor((n - 1) / 6) * 58, 0.1, ((n - 1) % 6) * 56)
+		end
 		btn.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
 		btn.Text = label
 		btn.Font = Enum.Font.GothamBlack
 		btn.TextSize = 11
 		btn.TextColor3 = Color3.new(1, 1, 1)
 		btn.TextWrapped = true
-		btn:SetAttribute("NoDragSound", true)
 		btn.Parent = gui
 		corner(btn, 25)
 		addStroke(btn, 2.5, (n * 0.13) % 1)
@@ -2050,14 +2055,15 @@ do
 		end)
 		local c2 = UIS.InputEnded:Connect(function(i)
 			if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+				if dragStart and moved and key then
+					local p = btn.Position
+					ext.floatPos[key] = { p.X.Scale, p.X.Offset, p.Y.Scale, p.Y.Offset }
+				end
 				dragStart = nil
 			end
 		end)
 		btn.MouseButton1Click:Connect(function()
-			if not moved then
-				playClick()
-				onClick()
-			end
+			if not moved then onClick() end
 		end)
 		btn.Destroying:Connect(function()
 			floatSlots[n] = nil
@@ -2065,7 +2071,7 @@ do
 			pcall(function() c2:Disconnect() end)
 		end)
 
-		table.insert(floats, { btn = btn, obj = obj })
+		table.insert(floats, { btn = btn, obj = obj, key = key })
 		return btn
 	end
 
@@ -2073,7 +2079,7 @@ do
 		local fl
 		addToggle(parent, "Popup " .. text, function(on)
 			if on then
-				if not fl or not fl.Parent then fl = makeFloat(label, onClick, obj) end
+				if not fl or not fl.Parent then fl = makeFloat(label, onClick, obj, text) end
 			elseif fl then
 				fl:Destroy()
 				fl = nil
@@ -2258,17 +2264,48 @@ do
 
 	local function cfgPath(slot) return CFG_DIR .. "/slot" .. slot .. ".json" end
 
+	local function packPos(u)
+		return { u.X.Scale, u.X.Offset, u.Y.Scale, u.Y.Offset }
+	end
+	local function unpackPos(t)
+		return (type(t) == "table" and #t == 4) and UDim2.new(t[1], t[2], t[3], t[4]) or nil
+	end
+
 	local function collectCfg()
-		local data = { toggles = {}, sliders = {} }
+		local data = { toggles = {}, sliders = {}, floats = {} }
 		for k, t in pairs(toggleReg) do data.toggles[k] = t.on end
 		for k, sl in pairs(sliderReg) do data.sliders[k] = sl.get() end
-		local p = tpBtn.Position
-		data.tp = { p.X.Scale, p.X.Offset, p.Y.Scale, p.Y.Offset }
+		data.tp = packPos(tpBtn.Position)
+		data.zf = packPos(openBtn.Position)
+		if ext.udBox then data.ud = packPos(ext.udBox.Position) end
+		for _, f in ipairs(floats) do
+			if f.key and f.btn and f.btn.Parent then
+				ext.floatPos[f.key] = packPos(f.btn.Position)
+			end
+		end
+		for k, pos in pairs(ext.floatPos) do
+			data.floats[k] = { pos[1], pos[2], pos[3], pos[4] }
+		end
 		return data
 	end
 
 	local function applyCfg(data)
 		if type(data) ~= "table" then return end
+		local zfPos = unpackPos(data.zf)
+		if zfPos then openBtn.Position = zfPos end
+		local udPos = unpackPos(data.ud)
+		if udPos and ext.udBox then ext.udBox.Position = udPos end
+		if type(data.floats) == "table" then
+			for k, pos in pairs(data.floats) do
+				if type(pos) == "table" and #pos == 4 then
+					ext.floatPos[k] = { pos[1], pos[2], pos[3], pos[4] }
+				end
+			end
+			for _, f in ipairs(floats) do
+				local p = f.key and unpackPos(ext.floatPos[f.key])
+				if p and f.btn and f.btn.Parent then f.btn.Position = p end
+			end
+		end
 		for k, v in pairs(data.sliders or {}) do
 			local sl = sliderReg[k]
 			if sl and type(v) == "number" then sl.set(v) end
@@ -2287,9 +2324,8 @@ do
 			local v = data.toggles[k]
 			if t.on ~= v then t.set(v) end
 		end
-		if type(data.tp) == "table" and #data.tp == 4 then
-			tpBtn.Position = UDim2.new(data.tp[1], data.tp[2], data.tp[3], data.tp[4])
-		end
+		local tpPos = unpackPos(data.tp)
+		if tpPos then tpBtn.Position = tpPos end
 	end
 
 	local cfgDefaults = collectCfg()
