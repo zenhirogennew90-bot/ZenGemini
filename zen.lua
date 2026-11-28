@@ -876,9 +876,11 @@ local speedToggle = addToggle(gB, "Speed Up", function(on)
 end)
 
 	RunService.Heartbeat:Connect(function()
-		local active = (flying == true) or (airwalk == true) or (freecamOn == true) or (ext.nc2 == true)
-		if udBox.Visible ~= active then
+	if not speedUp then return end
+	local _, _, hum = getChar()
+	if hum then hum.WalkSpeed = walkSpeed end
 end)
+
 
 addSlider(gB, gB, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, nil, 1000)
 addSlider(gB, gB, "Walk Speed", 16, 200, walkSpeed, function(v) walkSpeed = v end, nil, 500)
