@@ -711,9 +711,78 @@ flyToggle = addToggle(gA, "Fly", function(on)
 end)
 
 addToggle(gA, "Fly Bebas Lihat", function(on) flyLockOn = on end)
+local noclipToggle = addToggle(gA, "Noclip", function(on) noclip = on end)local freecamOn, freecamToggle, freecamSpeed = false, nil, 50
+local ext = { f3 = false, f1 = false, zoom = 400, nc2 = false, nc2Saved = setmetatable({}, { __mode = "k" }) }
 local noclipToggle = addToggle(gA, "Noclip", function(on) noclip = on end)
 
+local function restoreNc2()
+	for part in pairs(ext.nc2Saved) do
+		if part and part.Parent then
+			pcall(function() part.CanCollide = true end)
+		end
+		ext.nc2Saved[part] = nil
+	end
+end
+
+ext.nc2T = addToggle(gA, "No Clip v2 Lantai", function(on)
+	ext.nc2 = on
+	if not on then
+		restoreNc2()
+	end
+end)
+
+do
+	local rp = RaycastParams.new()
+	rp.FilterType = Enum.RaycastFilterType.Exclude
+
+	local function phasePart(part)
+		if part and part:IsA("BasePart") and not part:IsA("Terrain") and part.CanCollide and part.Name ~= "AirwalkPlatform" then
+			ext.nc2Saved[part] = tick()
+			part.CanCollide = false
+		end
+	end
+
+	RunService.Stepped:Connect(function()
+		local now = tick()
+		for part, t in pairs(ext.nc2Saved) do
+			if not ext.nc2 or not part or not part.Parent or (now - t > 0.45 and not down) then
+				if part and part.Parent then
+					pcall(function() part.CanCollide = true end)
+				end
+				ext.nc2Saved[part] = nil
+			end
+		end
+
+		if not ext.nc2 then return end
+		local char, root, hum = getChar()
+		if not (char and root and hum) then return end
+
+		rp.FilterDescendantsInstances = { char }
+
+		-- Tembus lantai ke bawah saat tombol DOWN ditekan
+		if down then
+			local res = workspace:Raycast(root.Position, Vector3.new(0, -6.5, 0), rp)
+			if res and res.Instance then
+				phasePart(res.Instance)
+			end
+			local vel = root.AssemblyLinearVelocity
+			if vel.Y < -28 then
+				root.AssemblyLinearVelocity = Vector3.new(vel.X, -28, vel.Z)
+			end
+		end
+
+		-- Tembus atap/lantai di atas kepala saat melompat
+		if root.AssemblyLinearVelocity.Y > 3 then
+			local upRes = workspace:Raycast(root.Position, Vector3.new(0, 5.5, 0), rp)
+			if upRes and upRes.Instance then
+				phasePart(upRes.Instance)
+			end
+		end
+	end)
+end
+
 RunService.Stepped:Connect(function()
+
 	if not noclip then return end
 	local char = player.Character
 	if not char then return end
@@ -806,10 +875,9 @@ local speedToggle = addToggle(gB, "Speed Up", function(on)
 	end
 end)
 
-RunService.Heartbeat:Connect(function()
-	if not speedUp then return end
-	local _, _, hum = getChar()
-	if hum then hum.WalkSpeed = walkSpeed end
+	RunService.Heartbeat:Connect(function()
+		local active = (flying == true) or (airwalk == true) or (freecamOn == true) or (ext.nc2 == true)
+		if udBox.Visible ~= active then
 end)
 
 addSlider(gB, gB, "Fly Speed", 10, 300, flySpeed, function(v) flySpeed = v end, nil, 1000)
@@ -877,7 +945,7 @@ do
 	mkFloat("DOWN", 76, 1.1, function(v) down = v end)
 
 	RunService.Heartbeat:Connect(function()
-		local active = (flying == true) or (airwalk == true) or (freecamOn == true)
+		local active = (flying == true) or (airwalk == true) or (freecamOn == true) or (ext.nc2 == true)
 		if udBox.Visible ~= active then
 			udBox.Visible = active
 			if not active then
@@ -2018,6 +2086,7 @@ do
 	addHeader(pA, "TOMBOL ON/OFF")
 	addPopup(pA, "Fly", "FLY", function() flyToggle.set(not flyToggle.on) end, flyToggle)
 	addPopup(pA, "Noclip", "NOCLIP", function() noclipToggle.set(not noclipToggle.on) end, noclipToggle)
+	addPopup(pA, "No Clip v2", "NC v2", function() ext.nc2T.set(not ext.nc2T.on) end, ext.nc2T)
 	addPopup(pA, "Airwalk", "AIR", function() airToggle.set(not airToggle.on) end, airToggle)
 	addPopup(pA, "NoClip+Airwalk", "NC+A", function() comboToggle.set(not comboToggle.on) end, comboToggle)
 	addPopup(pA, "Unli Jump", "JUMP", function() infJumpToggle.set(not infJumpToggle.on) end, infJumpToggle)
@@ -2434,7 +2503,7 @@ track(player.CharacterAdded:Connect(function()
 end))
 
 unloadHub = function()
-	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, airToggle, infJumpToggle, speedToggle, attachToggle, spectateToggle, freecamToggle, ext.f3T, ext.f1T, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
+	for _, t in ipairs({ comboToggle, flyToggle, noclipToggle, ext.nc2T, airToggle, infJumpToggle, speedToggle, attachToggle, spectateToggle, freecamToggle, ext.f3T, ext.f1T, darkToggle, espToggle, targetEspToggle, hbToggle, avatarToggle, skelToggle, gfxToggle, xToggle }) do
 		if t and t.on then pcall(t.set, false) end
 	end
 	tintTarget = 1
