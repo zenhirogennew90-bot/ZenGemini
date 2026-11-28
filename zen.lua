@@ -744,53 +744,25 @@ ext.nc2T = addToggle(gA, "No Clip v2 Lantai", function(on)
 end)
 
 do
-	local rp = RaycastParams.new()
-	rp.FilterType = Enum.RaycastFilterType.Exclude
-	local op = OverlapParams.new()
-	op.FilterType = Enum.RaycastFilterType.Exclude
-
-	local function phasePart(part)
-		if part and part:IsA("BasePart") and not part:IsA("Terrain") and part.CanCollide and part.Name ~= "AirwalkPlatform" then
-			ext.nc2Saved[part] = tick()
-			part.CanCollide = false
-		end
-	end
-
 	RunService.Stepped:Connect(function()
-		local now = tick()
-		for part, t in pairs(ext.nc2Saved) do
-			if not ext.nc2 or not part or not part.Parent or (now - t > 0.45 and not down) then
-				if part and part.Parent then
-					pcall(function() part.CanCollide = true end)
-				end
-				ext.nc2Saved[part] = nil
-			end
-		end
-
 		if not ext.nc2 then return end
 		local char, root, hum = getChar()
 		if not (char and root and hum) then return end
 
-		rp.FilterDescendantsInstances = { char }
-		op.FilterDescendantsInstances = { char }
-
-		-- Tembus semua lantai/blok di bawah kaki saat tombol DOWN ditekan
 		if down then
-			local parts = workspace:GetPartBoundsInBox(root.CFrame * CFrame.new(0, -3.5, 0), Vector3.new(4.5, 6, 4.5), op)
-			for _, part in ipairs(parts) do
-				phasePart(part)
+			for _, p in ipairs(char:GetDescendants()) do
+				if p:IsA("BasePart") and p.CanCollide then
+					p.CanCollide = false
+				end
 			end
-			local vel = root.AssemblyLinearVelocity
-			if vel.Y < -28 then
-				root.AssemblyLinearVelocity = Vector3.new(vel.X, -28, vel.Z)
-			end
-		end
-
-		-- Tembus atap/lantai di atas kepala saat melompat
-		if root.AssemblyLinearVelocity.Y > 3 then
-			local upRes = workspace:Raycast(root.Position, Vector3.new(0, 5.5, 0), rp)
-			if upRes and upRes.Instance then
-				phasePart(upRes.Instance)
+			hum:ChangeState(Enum.HumanoidStateType.Freefall)
+			root.AssemblyLinearVelocity = Vector3.zero
+			root.CFrame = root.CFrame - Vector3.new(0, 0.75, 0)
+		elseif root.AssemblyLinearVelocity.Y > 3 then
+			for _, p in ipairs(char:GetDescendants()) do
+				if p:IsA("BasePart") and p.CanCollide then
+					p.CanCollide = false
+				end
 			end
 		end
 	end)
