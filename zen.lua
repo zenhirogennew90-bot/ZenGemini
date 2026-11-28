@@ -399,6 +399,7 @@ openBtn.Font = Enum.Font.GothamBlack
 openBtn.TextSize = 16
 openBtn.TextColor3 = Color3.new(1, 1, 1)
 openBtn.Parent = gui
+openBtn:SetAttribute("NoDragSound", true)
 corner(openBtn, 23)
 addStroke(openBtn, 2.5, 0.15)
 
@@ -733,6 +734,8 @@ end)
 do
 	local rp = RaycastParams.new()
 	rp.FilterType = Enum.RaycastFilterType.Exclude
+	local op = OverlapParams.new()
+	op.FilterType = Enum.RaycastFilterType.Exclude
 
 	local function phasePart(part)
 		if part and part:IsA("BasePart") and not part:IsA("Terrain") and part.CanCollide and part.Name ~= "AirwalkPlatform" then
@@ -757,12 +760,13 @@ do
 		if not (char and root and hum) then return end
 
 		rp.FilterDescendantsInstances = { char }
+		op.FilterDescendantsInstances = { char }
 
-		-- Tembus lantai ke bawah saat tombol DOWN ditekan
+		-- Tembus semua lantai/blok di bawah kaki saat tombol DOWN ditekan
 		if down then
-			local res = workspace:Raycast(root.Position, Vector3.new(0, -6.5, 0), rp)
-			if res and res.Instance then
-				phasePart(res.Instance)
+			local parts = workspace:GetPartBoundsInBox(root.CFrame * CFrame.new(0, -3.5, 0), Vector3.new(4.5, 6, 4.5), op)
+			for _, part in ipairs(parts) do
+				phasePart(part)
 			end
 			local vel = root.AssemblyLinearVelocity
 			if vel.Y < -28 then
@@ -938,9 +942,19 @@ do
 		corner(b, 9)
 		addStroke(b, 1.5, phase)
 		registerPanel(b)
-		b.MouseButton1Down:Connect(function() setter(true) end)
-		b.MouseButton1Up:Connect(function() setter(false) end)
-		b.MouseLeave:Connect(function() setter(false) end)
+		local holding = false
+		b.InputBegan:Connect(function(i)
+			if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
+				holding = true
+				setter(true)
+			end
+		end)
+		uis.InputEnded:Connect(function(i)
+			if holding and (i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1) then
+				holding = false
+				setter(false)
+			end
+		end)
 	end
 	mkFloat("UP", 6, 0.6, function(v) up = v end)
 	mkFloat("DOWN", 76, 1.1, function(v) down = v end)
@@ -2038,6 +2052,7 @@ do
 		btn.TextSize = 11
 		btn.TextColor3 = Color3.new(1, 1, 1)
 		btn.TextWrapped = true
+		btn:SetAttribute("NoDragSound", true)
 		btn.Parent = gui
 		corner(btn, 25)
 		addStroke(btn, 2.5, (n * 0.13) % 1)
@@ -2064,7 +2079,10 @@ do
 			end
 		end)
 		btn.MouseButton1Click:Connect(function()
-			if not moved then onClick() end
+			if not moved then
+				playClick()
+				onClick()
+			end
 		end)
 		btn.Destroying:Connect(function()
 			floatSlots[n] = nil
@@ -2186,7 +2204,10 @@ local function setOpen(v)
 	end
 end
 
-openBtn.MouseButton1Click:Connect(function() setOpen(not isOpen) end)
+openBtn.MouseButton1Click:Connect(function()
+	playClick()
+	setOpen(not isOpen)
+end)
 closeBtn.MouseButton1Click:Connect(function() setOpen(false) end)
 
 do
@@ -2522,12 +2543,8 @@ end
 pcall(function() getgenv().ZeFeraUnload = unloadHub end)
 
 local function hookClick(d)
-	if d:IsA("GuiButton") then
-		d.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				playClick()
-			end
-		end)
+	if d:IsA("GuiButton") and not d:GetAttribute("NoDragSound") then
+		d.MouseButton1Click:Connect(playClick)
 	end
 end
 
