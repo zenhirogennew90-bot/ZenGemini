@@ -313,8 +313,12 @@ tabBar.ScrollingDirection = Enum.ScrollingDirection.X
 tabBar.Parent = main
 local tabLayout = Instance.new("UIListLayout", tabBar)
 tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 tabLayout.Padding = UDim.new(0, 6)
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local tabPad = Instance.new("UIPadding", tabBar)
+tabPad.PaddingLeft = UDim.new(0, 2)
+tabPad.PaddingRight = UDim.new(0, 2)
 
 local pageHolder = Instance.new("Frame")
 pageHolder.Position = UDim2.fromOffset(0, TAB_Y + 34)
