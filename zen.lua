@@ -1296,8 +1296,13 @@ local R15_BONES = {
 	{ "LowerTorso", "RightUpperLeg" }, { "RightUpperLeg", "RightLowerLeg" }, { "RightLowerLeg", "RightFoot" },
 }
 local R6_BONES = {
-	{ "Head", "Torso" }, { "Torso", "Left Arm" }, { "Torso", "Right Arm" },
-	{ "Torso", "Left Leg" }, { "Torso", "Right Leg" },
+    {"Head", "Torso", Vector3.zero, Vector3.new(0, -0.9, 0)},
+    {"Torso", "Torso", Vector3.new(-1.5, 0.75, 0), Vector3.new(1.5, 0.75, 0)},
+    {"Left Arm", "Left Arm", Vector3.new(0, 0.75, 0), Vector3.new(0, -0.9, 0)},
+    {"Right Arm", "Right Arm", Vector3.new(0, 0.75, 0), Vector3.new(0, -0.9, 0)},
+    {"Torso", "Torso", Vector3.new(-0.5, -0.9, 0), Vector3.new(0.5, -0.9, 0)},
+    {"Left Leg", "Left Leg", Vector3.new(0, 0.9, 0), Vector3.new(0, -0.95, 0)},
+    {"Right Leg", "Right Leg", Vector3.new(0, 0.9, 0), Vector3.new(0, -0.95, 0)},
 }
 
 local function hideAvatar(char)
@@ -1357,7 +1362,7 @@ local function buildSkeleton(plr)
 			box.Transparency = 0
 			box.Color3 = Color3.new(1, 1, 1)
 			box.Parent = skelFolder
-			table.insert(bones, { a = pa, b = pb, box = box })
+			table.insert(bones, { a = pa, b = pb, oa = pair[3] or Vector3.zero, ob = pair[4] or Vector3.zero, box = box })
 		end
 	end
 	skelObjs[plr] = { char = char, bones = bones }
@@ -1408,14 +1413,17 @@ RunService.RenderStepped:Connect(function()
 		for _, b in ipairs(sk.bones) do
 			local pa, pb = b.a, b.b
 			if alive and pa.Parent and pb.Parent then
-				local rel = pa.CFrame:PointToObjectSpace(pb.Position)
+				local pA = b.oa
+				local pB = pa.CFrame:PointToObjectSpace(pb.CFrame:PointToWorldSpace(b.ob))
+				local rel = pB - pA
 				local len = rel.Magnitude
 				if len > 0.05 and len < 6 then
 					local upv = (math.abs(rel.Y / len) > 0.98) and Vector3.xAxis or Vector3.yAxis
 					b.box.Visible = true
 					b.box.Size = Vector3.new(0.14, 0.14, len)
-					b.box.CFrame = CFrame.lookAt(rel / 2, rel, upv)
+					b.box.CFrame = CFrame.lookAt(pA + rel / 2, pB, upv)
 					b.box.Color3 = hue
+
 				else
 					b.box.Visible = false
 				end
