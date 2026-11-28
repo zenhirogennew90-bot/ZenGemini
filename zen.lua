@@ -61,6 +61,7 @@ local spectateOn, spectateToggle = false, nil
 local freecamOn, freecamToggle, freecamSpeed = false, nil, 50
 local ext = { f3 = false, f1 = false, zoom = 400, nc2 = false, nc2Saved = setmetatable({}, { __mode = "k" }) }
 local tpRandom, tpBtn, darkToggle
+local tpLocked = false
 local targets, targetEspOn = {}, false
 local avatarHideOn, skelOn, skelOnlyTarget = false, false, false
 local clickOn, clickVol = true, 0.6
@@ -422,7 +423,7 @@ addStroke(openBtn, 2.5, 0.15)
 do
 	local dragging, activeTouch, dragStart, startAbs = false, nil, nil, nil
 	openBtn.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if not tpLocked and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
 			dragging = true
 			activeTouch = input
 			dragStart = input.Position
@@ -888,7 +889,7 @@ do
 
 	local dragging, dragStart, startPos
 	udBox.InputBegan:Connect(function(i)
-		if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+		if not tpLocked and (i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch) then
 			dragging, dragStart, startPos = true, i.Position, udBox.Position
 		end
 	end)
@@ -1128,7 +1129,6 @@ Players.PlayerRemoving:Connect(function(plr)
 end)
 renderTpTargets()
 
-local tpLocked = false
 tpBtn = Instance.new("TextButton")
 tpBtn.Name = "TPShortcut"
 tpBtn.Size = UDim2.fromOffset(54, 54)
