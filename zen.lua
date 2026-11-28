@@ -470,19 +470,6 @@ local function addHeader(parent, text)
 end
 
 local function addNote(parent, text)
-	local l = Instance.new("TextLabel")
-	l.Size = UDim2.new(1, 0, 0, 0)
-	l.AutomaticSize = Enum.AutomaticSize.Y
-	l.BackgroundTransparency = 1
-	l.Text = text
-	l.Font = Enum.Font.GothamMedium
-	l.TextSize = 11
-	l.TextWrapped = true
-	l.TextColor3 = Color3.fromRGB(150, 150, 170)
-	l.TextXAlignment = Enum.TextXAlignment.Left
-	l.TextYAlignment = Enum.TextYAlignment.Top
-	l.LayoutOrder = nextOrder()
-	l.Parent = parent
 end
 
 local function addToggle(parent, text, callback)
