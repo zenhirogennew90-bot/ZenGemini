@@ -227,6 +227,18 @@ waBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
+local waNote = Instance.new("TextLabel")
+waNote.Size = UDim2.new(1, -352, 0, 24)
+waNote.Position = UDim2.fromOffset(188, 8)
+waNote.BackgroundTransparency = 1
+waNote.Text = "Lapor Bug & Saran Fitur Baru"
+waNote.Font = Enum.Font.GothamBold
+waNote.TextSize = 11
+waNote.TextColor3 = Color3.fromRGB(160, 235, 190)
+waNote.TextXAlignment = Enum.TextXAlignment.Left
+waNote.TextTruncate = Enum.TextTruncate.AtEnd
+waNote.Parent = header
+
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.fromOffset(28, 28)
 closeBtn.Position = UDim2.new(1, -38, 0, 6)
