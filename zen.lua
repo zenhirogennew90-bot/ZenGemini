@@ -1393,22 +1393,6 @@ do
 				end
 			end
 		end
-arent then
-	local rel = pa.CFrame:PointToObjectSpace(pb.Position)
-	local len = rel.Magnitude
-	if len > 0.05 then
-		local upv = (math.abs(rel.Y / len) > 0.98) and Vector3.xAxis or Vector3.yAxis
-		b.box.Size = Vector3.new(0.14, 0.14, len)
-		b.box.CFrame = CFrame.lookAt(rel / 2, rel, upv)
-		b.box.Color3 = hue
-	end
-end
-end
-end)
-
-				end
-			end
-		end
 		for plr in pairs(skelObjs) do
 			if not plr.Parent then clearSkeleton(plr) end
 		end
@@ -1437,19 +1421,6 @@ RunService.RenderStepped:Connect(function()
 				end
 			else
 				b.box.Visible = false
-			end
-		end
-	end
-end)
-arent then
-				local rel = pa.CFrame:PointToObjectSpace(pb.Position)
-				local len = rel.Magnitude
-				if len > 0.05 then
-					local upv = (math.abs(rel.Y / len) > 0.98) and Vector3.xAxis or Vector3.yAxis
-					b.box.Size = Vector3.new(0.14, 0.14, len)
-					b.box.CFrame = CFrame.lookAt(rel / 2, rel, upv)
-					b.box.Color3 = hue
-				end
 			end
 		end
 	end
