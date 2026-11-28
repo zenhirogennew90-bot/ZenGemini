@@ -1393,12 +1393,19 @@ do
 				end
 			end
 		end
-sk.char ~= char or #sk.bones == 0 or (sk.bones[1] and not sk.bones[1].a.Parent)
-					if broken then
-						buildSkeleton(plr)
-					end
-				elseif skelObjs[plr] then
-					clearSkeleton(plr)
+arent then
+	local rel = pa.CFrame:PointToObjectSpace(pb.Position)
+	local len = rel.Magnitude
+	if len > 0.05 then
+		local upv = (math.abs(rel.Y / len) > 0.98) and Vector3.xAxis or Vector3.yAxis
+		b.box.Size = Vector3.new(0.14, 0.14, len)
+		b.box.CFrame = CFrame.lookAt(rel / 2, rel, upv)
+		b.box.Color3 = hue
+	end
+end
+end
+end)
+
 				end
 			end
 		end
