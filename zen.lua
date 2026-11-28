@@ -2141,9 +2141,11 @@ addSlider(sA, sA, "Lebar Menu", 360, maxW, math.min(MENU_W, maxW), function(v)
 	FULL = UDim2.fromOffset(MENU_W, MENU_H)
 	CLOSED = UDim2.fromOffset(MENU_W, 0)
 	if isOpen then
+	if isOpen then
 		TweenService:Create(main, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = FULL}):Play()
 	end
 end, " px")
+
 
 do
 	local mapEditMode = false
@@ -2256,11 +2258,6 @@ do
 		toast("Layout tombol map direset ke posisi awal")
 	end)
 end
-
-addHeader(sB, "AUDIO")
-Enum.EasingDirection.Out), { Size = FULL }):Play()
-	end
-end, " px")
 
 addHeader(sB, "AUDIO")
 local soundToggle = addToggle(sB, "Suara Klik Lucu", function(on) clickOn = on end)
