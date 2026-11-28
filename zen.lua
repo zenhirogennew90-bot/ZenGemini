@@ -1379,10 +1379,21 @@ do
 		for _, plr in ipairs(Players:GetPlayers()) do
 			if plr ~= player then
 				local char = plr.Character
+				local hum = char and char:FindFirstChildOfClass("Humanoid")
+				local alive = hum ~= nil and hum.Health > 0
 				if avatarHideOn and char then hideAvatar(char) end
-				if skelWanted(plr) and char then
+				if skelWanted(plr) and char and alive then
 					local sk = skelObjs[plr]
 					local broken = not sk or sk.char ~= char or #sk.bones == 0 or (sk.bones[1] and not sk.bones[1].a.Parent)
+					if broken then
+						buildSkeleton(plr)
+					end
+				elseif skelObjs[plr] then
+					clearSkeleton(plr)
+				end
+			end
+		end
+sk.char ~= char or #sk.bones == 0 or (sk.bones[1] and not sk.bones[1].a.Parent)
 					if broken then
 						buildSkeleton(plr)
 					end
@@ -1401,9 +1412,29 @@ RunService.RenderStepped:Connect(function()
 	if not next(skelObjs) then return end
 	local hue = Color3.fromHSV((tick() * 0.25) % 1, 1, 1)
 	for _, sk in pairs(skelObjs) do
+		local hum = sk.char and sk.char:FindFirstChildOfClass("Humanoid")
+		local alive = hum ~= nil and hum.Health > 0
 		for _, b in ipairs(sk.bones) do
 			local pa, pb = b.a, b.b
-			if pa.Parent and pb.Parent then
+			if alive and pa.Parent and pb.Parent then
+				local rel = pa.CFrame:PointToObjectSpace(pb.Position)
+				local len = rel.Magnitude
+				if len > 0.05 and len < 6 then
+					local upv = (math.abs(rel.Y / len) > 0.98) and Vector3.xAxis or Vector3.yAxis
+					b.box.Visible = true
+					b.box.Size = Vector3.new(0.14, 0.14, len)
+					b.box.CFrame = CFrame.lookAt(rel / 2, rel, upv)
+					b.box.Color3 = hue
+				else
+					b.box.Visible = false
+				end
+			else
+				b.box.Visible = false
+			end
+		end
+	end
+end)
+arent then
 				local rel = pa.CFrame:PointToObjectSpace(pb.Position)
 				local len = rel.Magnitude
 				if len > 0.05 then
