@@ -2152,6 +2152,7 @@ do
 	local origVis = {}
 	local scaleObjs = {}
 	local hookedBtn = {}
+	local visualTargets = {}
 	local disabledLayouts = {}
 
 	local function isMapButton(btn)
@@ -2161,6 +2162,26 @@ do
 		if not sg or not sg.Enabled then return false end
 		if sg.Name == "TouchGui" and btn.Name ~= "JumpButton" then return false end
 		return btn.Visible
+	end
+
+	local function getVisualTarget(btn)
+		local isHitbox = btn.BackgroundTransparency >= 0.95
+			and (not btn:IsA("TextButton") or btn.Text == "")
+			and (not btn:IsA("ImageButton") or btn.Image == "")
+		if not isHitbox then return btn end
+
+		local cur = btn
+		for _ = 1, 2 do
+			local p = cur.Parent
+			if p and p:IsA("GuiObject") and not p:IsA("ScreenGui")
+				and p.AbsoluteSize.X > 0 and p.AbsoluteSize.X <= 260
+				and p.AbsoluteSize.Y > 0 and p.AbsoluteSize.Y <= 120 then
+				cur = p
+			else
+				break
+			end
+		end
+		return cur
 	end
 
 	local function setHighlight(btn, state, isSelected)
@@ -2178,9 +2199,9 @@ do
 	end
 
 	local function refreshHighlights()
-		for btn in pairs(hookedBtn) do
-			if btn and btn.Parent then
-				setHighlight(btn, mapEditMode and btn.Visible, btn == selectedBtn)
+		for target in pairs(visualTargets) do
+			if target and target.Parent then
+				setHighlight(target, mapEditMode and target.Visible, target == selectedBtn)
 			end
 		end
 	end
@@ -2189,24 +2210,27 @@ do
 		if hookedBtn[btn] then return end
 		hookedBtn[btn] = true
 
+		local target = getVisualTarget(btn)
+		visualTargets[target] = true
+
 		local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
 
 		btn.InputBegan:Connect(function(input)
 			if not mapEditMode then return end
 			if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-				selectedBtn = btn
+				selectedBtn = target
 				refreshHighlights()
 
 				dragging = true
 				dragInput = input
 				dragStart = input.Position
-				if not origPos[btn] then
-					origPos[btn] = btn.Position
+				if not origPos[target] then
+					origPos[target] = target.Position
 				end
-				startPos = btn.Position
+				startPos = target.Position
 
-				if btn.Parent then
-					for _, child in ipairs(btn.Parent:GetChildren()) do
+				if target.Parent then
+					for _, child in ipairs(target.Parent:GetChildren()) do
 						if (child:IsA("UIListLayout") or child:IsA("UIGridLayout")) and not disabledLayouts[child] then
 							disabledLayouts[child] = child.Parent
 							child.Parent = nil
@@ -2220,7 +2244,7 @@ do
 			if not dragging or not mapEditMode then return end
 			if input == dragInput or input.UserInputType == Enum.UserInputType.MouseMovement then
 				local delta = input.Position - dragStart
-				btn.Position = UDim2.new(
+				target.Position = UDim2.new(
 					startPos.X.Scale, startPos.X.Offset + delta.X,
 					startPos.Y.Scale, startPos.Y.Offset + delta.Y
 				)
