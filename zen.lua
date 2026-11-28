@@ -408,70 +408,6 @@ local sA, sB = addTab("PENGATURAN")
 local svA, svB = addTab("SERVER")
 showTab(1)
 
-do
-	local TeleportService = game:GetService("TeleportService")
-	local HttpService = game:GetService("HttpService")
-
-	local function findServer(order)
-		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=" .. order .. "&limit=100"
-		local ok, raw = pcall(function() return game:HttpGet(url) end)
-		if not ok or not raw then return nil, "Gagal mengambil daftar server" end
-		local ok2, data = pcall(function() return HttpService:JSONDecode(raw) end)
-		if not ok2 or type(data) ~= "table" or type(data.data) ~= "table" then
-			return nil, "Data server tidak valid"
-		end
-		local best = nil
-		for _, s in ipairs(data.data) do
-			if s.id and s.id ~= game.JobId and (s.playing or 0) < (s.maxPlayers or 0) then
-				if not best then
-					best = s
-				elseif order == "Desc" and (s.playing or 0) > (best.playing or 0) then
-					best = s
-				elseif order == "Asc" and (s.playing or 0) < (best.playing or 0) then
-					best = s
-				end
-			end
-		end
-		if not best then return nil, "Server tujuan tidak ditemukan" end
-		return best
-	end
-
-	addHeader(svA, "SERVER SAAT INI")
-	addButton(svA, "Rejoin Server", function()
-		toast("Rejoin ke server yang sama...")
-		pcall(function()
-			TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
-		end)
-	end)
-
-	addHeader(svB, "PINDAH SERVER")
-	addButton(svB, "Join Server Ramai", function()
-		toast("Mencari server ramai...")
-		task.spawn(function()
-			local srv, err = findServer("Desc")
-			if not srv then
-				toast(err)
-				return
-			end
-			toast("Masuk server (" .. srv.playing .. "/" .. srv.maxPlayers .. ")...")
-			TeleportService:TeleportToPlaceInstance(game.PlaceId, srv.id, player)
-		end)
-	end)
-
-	addButton(svB, "Join Server Kosong", function()
-		toast("Mencari server sepi...")
-		task.spawn(function()
-			local srv, err = findServer("Asc")
-			if not srv then
-				toast(err)
-				return
-			end
-			toast("Masuk server (" .. srv.playing .. "/" .. srv.maxPlayers .. ")...")
-			TeleportService:TeleportToPlaceInstance(game.PlaceId, srv.id, player)
-		end)
-	end)
-end
-
 local openBtn = Instance.new("TextButton")
 openBtn.Size = UDim2.fromOffset(46, 46)
 openBtn.Position = UDim2.new(0, 12, 0.1, 0)
@@ -2213,6 +2149,69 @@ addHeader(sB, "AUDIO")
 local soundToggle = addToggle(sB, "Suara Klik Lucu", function(on) clickOn = on end)
 soundToggle.set(true)
 addSlider(sB, sB, "Volume Klik", 0, 100, math.floor(clickVol * 100), function(v) clickVol = v / 100 end, "%")
+do
+	local TeleportService = game:GetService("TeleportService")
+	local HttpService = game:GetService("HttpService")
+
+	local function findServer(order)
+		local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=" .. order .. "&limit=100"
+		local ok, raw = pcall(function() return game:HttpGet(url) end)
+		if not ok or not raw then return nil, "Gagal mengambil daftar server" end
+		local ok2, data = pcall(function() return HttpService:JSONDecode(raw) end)
+		if not ok2 or type(data) ~= "table" or type(data.data) ~= "table" then
+			return nil, "Data server tidak valid"
+		end
+		local best = nil
+		for _, s in ipairs(data.data) do
+			if s.id and s.id ~= game.JobId and (s.playing or 0) < (s.maxPlayers or 0) then
+				if not best then
+					best = s
+				elseif order == "Desc" and (s.playing or 0) > (best.playing or 0) then
+					best = s
+				elseif order == "Asc" and (s.playing or 0) < (best.playing or 0) then
+					best = s
+				end
+			end
+		end
+		if not best then return nil, "Server tujuan tidak ditemukan" end
+		return best
+	end
+
+	addHeader(svA, "SERVER SAAT INI")
+	addButton(svA, "Rejoin Server", function()
+		toast("Rejoin ke server yang sama...")
+		pcall(function()
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+		end)
+	end)
+
+	addHeader(svB, "PINDAH SERVER")
+	addButton(svB, "Join Server Ramai", function()
+		toast("Mencari server ramai...")
+		task.spawn(function()
+			local srv, err = findServer("Desc")
+			if not srv then
+				toast(err)
+				return
+			end
+			toast("Masuk server (" .. srv.playing .. "/" .. srv.maxPlayers .. ")...")
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, srv.id, player)
+		end)
+	end)
+
+	addButton(svB, "Join Server Kosong", function()
+		toast("Mencari server sepi...")
+		task.spawn(function()
+			local srv, err = findServer("Asc")
+			if not srv then
+				toast(err)
+				return
+			end
+			toast("Masuk server (" .. srv.playing .. "/" .. srv.maxPlayers .. ")...")
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, srv.id, player)
+		end)
+	end)
+end
 
 ----------------------------------------------------------------
 -- Gerakan fly & buka/tutup menu
